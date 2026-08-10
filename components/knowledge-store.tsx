@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { fetchKnowledgeSnapshot } from "@/lib/api-client";
+import { fetchKnowledgeSnapshot } from "@/lib/client/api-client";
 import {
   knowledge as seedKnowledge,
   type Client,
@@ -229,13 +229,13 @@ export function KnowledgeProvider({ children }: { children: React.ReactNode }) {
         }
         return kind === "decision"
           ? {
-              ...prev,
-              decisions: prev.decisions.filter((item) => item.id !== id),
-            }
+            ...prev,
+            decisions: prev.decisions.filter((item) => item.id !== id),
+          }
           : {
-              ...prev,
-              documents: prev.documents.filter((item) => item.id !== id),
-            };
+            ...prev,
+            documents: prev.documents.filter((item) => item.id !== id),
+          };
       });
     },
     [],

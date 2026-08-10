@@ -20,7 +20,7 @@ UI components → hooks → API service (lib/api-client.ts) → API routes → s
 
 Rules this design follows:
 
-- **Components never call `fetch` directly.** All HTTP lives in [lib/api-client.ts](../lib/api-client.ts).
+- **Components never call `fetch` directly.** All HTTP lives in [lib/client/api-client.ts](../lib/client/api-client.ts).
 - **Hooks own request state.** `hooks/use-ask.ts` handles the `/api/ask` request with loading and error state.
 - **Types are shared and client-safe.** All domain types live in [lib/types.ts](../lib/types.ts) with no `server-only` imports, so client, server, and tests use one model.
 - **The persistence source is swappable.** The knowledge store is isolated so a database can replace browser storage without touching the UI.

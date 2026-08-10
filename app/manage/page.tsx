@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/app-shell";
-import { ManageView } from "@/components/manage-view";
+import { ManageView } from "@/components/manage/manage-view";
 
 const manageKinds = ["client", "person", "project", "topic", "decision", "document"] as const;
 type ManageKind = (typeof manageKinds)[number];

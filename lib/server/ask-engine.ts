@@ -1,6 +1,6 @@
 import "server-only";
-import { database } from "@/lib/database";
-import { getDirectRelationships } from "@/lib/relationships";
+import { database } from "@/lib/server/database";
+import { getDirectRelationships } from "@/lib/server/relationships";
 import type { AskResult, GraphNode } from "@/lib/types";
 
 export type { AskResult } from "@/lib/types";

@@ -1,4 +1,4 @@
-import { database } from "@/lib/database";
+import { database } from "@/lib/server/database";
 export const runtime = "nodejs";
 export async function GET() {
   try {

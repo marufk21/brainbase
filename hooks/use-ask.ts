@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { askRemoteQuestion } from "@/lib/api-client";
+import { askRemoteQuestion } from "@/lib/client/api-client";
 import type { AskResult } from "@/lib/types";
 
 /**

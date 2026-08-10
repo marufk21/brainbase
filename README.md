@@ -140,21 +140,28 @@ The tests validate that every graph edge points to a real node, that a newly add
 ```
 app/            Next.js App Router pages and API routes
 components/     Views (Knowledge, Ask, Manage, Login) + knowledge store
-hooks/          useAuth, useAsk — UI never calls fetch directly
+  manage/       Manage view split: page shell, entity forms, form controls
+hooks/          use-auth, use-ask — UI never calls fetch directly
 lib/            Shared logic:
-                  types.ts        client-safe domain types
-                  knowledge.ts    seed data, graph builder, local answer engine
-                  api-client.ts   only place that talks HTTP
-                  auth.ts         demo auth logic
-                  database.ts     Postgres connection (server-only)
-                  entity-api.ts   DB-backed CRUD service
-                  ask-engine.ts   DB-backed answer engine
-                  relationships.ts DB-backed relationship lookup
-data/           Fictional sample sources (JSON, Markdown, Slack excerpt)
+                  types.ts         client-safe domain types
+                  knowledge.ts     seed data, graph builder, local answer engine
+                  auth.ts          demo auth logic
+  client/
+    api-client.ts  only place that talks HTTP (must stay server-free)
+  server/       server-only modules (Postgres-backed):
+    database.ts      Postgres connection
+    entity-api.ts    DB-backed CRUD service
+    ask-engine.ts    DB-backed answer engine
+    relationships.ts DB-backed relationship lookup
+data/
+  seed/         Fictional JSON fixtures loaded by db/seed.mjs
+  sources/      Fictional Markdown documents and Slack excerpt
 db/             schema.sql, seed.mjs, apply.mjs — PostgreSQL setup
 tests/          knowledge.test.ts, auth.test.ts
 docs/           Design document and the original problem statement
 ```
+
+File names follow **kebab-case** (e.g. `components/app-shell.tsx`, `hooks/use-ask.ts`); exported symbols keep PascalCase for components and camelCase for hooks/functions.
 
 ## Documentation
 

@@ -1,4 +1,4 @@
-import { answerFromKnowledgeGraph } from "@/lib/ask-engine";
+import { answerFromKnowledgeGraph } from "@/lib/server/ask-engine";
 
 export const runtime = "nodejs";
 

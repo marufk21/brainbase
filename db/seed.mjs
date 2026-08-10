@@ -33,12 +33,12 @@ const clientStatus = (value) => ({ Active: "active", Past: "past" })[value] ?? "
 const insert = (statement) => sql.push(statement);
 
 const [people, clients, projects, decisions, topics, messages] = await Promise.all([
-  readJson("people.json"),
-  readJson("clients.json"),
-  readJson("projects.json"),
-  readJson("decisions.json"),
-  readJson("topics.json"),
-  readJson("slack-exports/general-channel-excerpt.json"),
+  readJson("seed/people.json"),
+  readJson("seed/clients.json"),
+  readJson("seed/projects.json"),
+  readJson("seed/decisions.json"),
+  readJson("seed/topics.json"),
+  readJson("sources/slack-exports/general-channel-excerpt.json"),
 ]);
 
 const topicByName = new Map(topics.map((topic) => [topic.name, topic]));
@@ -107,11 +107,11 @@ for (const decision of decisions) {
     );
 }
 
-const markdownFiles = (await readdir(resolve(dataDir, "documents"))).filter((name) =>
+const markdownFiles = (await readdir(resolve(dataDir, "sources/documents"))).filter((name) =>
   name.endsWith(".md"),
 );
 for (const file of markdownFiles) {
-  const content = await readFile(resolve(dataDir, "documents", file), "utf8");
+  const content = await readFile(resolve(dataDir, "sources/documents", file), "utf8");
   const title = content.match(/^#\s+(.+)$/m)?.[1] ?? basename(file, ".md");
   const summary = content.replace(/^#.*$/m, "").trim().replaceAll(/\s+/g, " ").slice(0, 500);
   const documentId = uuid("document", file);

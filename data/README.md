@@ -16,14 +16,15 @@ Just make sure your system can work with realistic connected information.
 
 ## What is included
 
-| File / Folder  | Description                                  |
-| -------------- | -------------------------------------------- |
-| people.json    | Team members                                 |
-| clients.json   | Client organisations                         |
-| projects.json  | Projects (linked to clients and people)      |
-| decisions.json | Important decisions with context             |
-| topics.json    | Recurring concepts / themes                  |
-| documents/     | Markdown notes and summaries                 |
-| slack-exports/ | Small fictional Slack-style message excerpts |
+| File / Folder          | Description                                  |
+| ---------------------- | -------------------------------------------- |
+| seed/                  | JSON fixtures loaded by `db/seed.mjs`        |
+| seed/people.json       | Team members                                 |
+| seed/clients.json      | Client organisations                         |
+| seed/projects.json     | Projects (linked to clients and people)      |
+| seed/decisions.json    | Important decisions with context             |
+| seed/topics.json       | Recurring concepts / themes                  |
+| sources/documents/     | Markdown notes and summaries                 |
+| sources/slack-exports/ | Small fictional Slack-style message excerpts |
 
 The data is intentionally connected. Projects link to people and clients. Decisions link to projects and topics. Documents and messages refer to the same entities. A good solution will make use of these connections.

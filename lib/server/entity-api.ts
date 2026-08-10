@@ -1,5 +1,5 @@
 import "server-only";
-import { database } from "@/lib/database";
+import { database } from "@/lib/server/database";
 
 export const entities = [
   "people",

@@ -1,4 +1,4 @@
-import { getDirectRelationships } from "@/lib/relationships";
+import { getDirectRelationships } from "@/lib/server/relationships";
 
 export const runtime = "nodejs";
 

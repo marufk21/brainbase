@@ -1,4 +1,4 @@
-import { ApiError, isEntity, list, create } from "@/lib/entity-api";
+import { ApiError, isEntity, list, create } from "@/lib/server/entity-api";
 
 export const runtime = "nodejs";
 
