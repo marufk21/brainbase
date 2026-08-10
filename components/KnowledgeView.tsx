@@ -2,11 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import {
-  buildKnowledgeGraph,
-  getEntityRelationships,
-  type EntityKind,
-} from "@/lib/knowledge";
+import { buildKnowledgeGraph, getEntityRelationships, type EntityKind } from "@/lib/knowledge";
 import { useKnowledge } from "@/components/knowledge-store";
 import { DatabaseIcon, LinkIcon, PlusIcon } from "@/components/icons";
 
@@ -46,11 +42,7 @@ export function KnowledgeView({
   const activeId = nodesForType.some((node) => node.id === selectedId)
     ? selectedId
     : nodesForType[0]?.id;
-  const { entity, relationships } = getEntityRelationships(
-    type,
-    activeId ?? "",
-    collections,
-  );
+  const { entity, relationships } = getEntityRelationships(type, activeId ?? "", collections);
 
   const openTarget = (kind: EntityKind, id: string) => {
     if (openableKinds.includes(kind)) {
@@ -71,8 +63,8 @@ export function KnowledgeView({
             Browse company knowledge
           </h1>
           <p className="mt-2 max-w-2xl text-base leading-7 text-slate-600">
-            Projects, people, clients, documents, decisions, and topics — and
-            the relationships that connect them.
+            Projects, people, clients, documents, decisions, and topics — and the relationships that
+            connect them.
           </p>
         </div>
         <Link
@@ -86,8 +78,7 @@ export function KnowledgeView({
 
       <div className="mt-6 flex gap-2 overflow-x-auto pb-1">
         {tabs.map((tab) => {
-          const count = graph.nodes.filter((node) => node.kind === tab.kind)
-            .length;
+          const count = graph.nodes.filter((node) => node.kind === tab.kind).length;
           const active = type === tab.kind;
           return (
             <button
@@ -105,9 +96,7 @@ export function KnowledgeView({
               {tab.label}
               <span
                 className={`rounded-full px-1.5 py-0.5 text-[11px] font-bold leading-none ${
-                  active
-                    ? "bg-teal-500/25 text-teal-200"
-                    : "bg-slate-100 text-slate-500"
+                  active ? "bg-teal-500/25 text-teal-200" : "bg-slate-100 text-slate-500"
                 }`}
               >
                 {count}
@@ -140,13 +129,9 @@ export function KnowledgeView({
                   <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-teal-700">
                     {node.kind}
                   </p>
-                  <h2 className="mt-1.5 font-semibold leading-snug">
-                    {node.label}
-                  </h2>
+                  <h2 className="mt-1.5 font-semibold leading-snug">{node.label}</h2>
                   {node.meta ? (
-                    <p className="mt-1 line-clamp-1 text-sm text-slate-500">
-                      {node.meta}
-                    </p>
+                    <p className="mt-1 line-clamp-1 text-sm text-slate-500">{node.meta}</p>
                   ) : null}
                 </button>
               );
@@ -190,8 +175,7 @@ export function KnowledgeView({
                   Relationships
                 </h3>
                 <p className="mt-1 text-sm text-slate-500">
-                  Direct links from the knowledge graph. Select an entity to
-                  follow it.
+                  Direct links from the knowledge graph. Select an entity to follow it.
                 </p>
                 {relationships.length > 0 ? (
                   <div className="mt-4 grid gap-3 md:grid-cols-2 min-[1700px]:grid-cols-3">
@@ -201,16 +185,11 @@ export function KnowledgeView({
                         className="rounded-xl border border-slate-200 bg-slate-50/70 p-4"
                       >
                         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 font-mono text-sm">
-                          <span className="text-teal-700">
-                            {relationship.label}
-                          </span>
+                          <span className="text-teal-700">{relationship.label}</span>
                           <span className="text-slate-400">→</span>
                           <button
                             onClick={() =>
-                              openTarget(
-                                relationship.target.kind,
-                                relationship.target.id,
-                              )
+                              openTarget(relationship.target.kind, relationship.target.id)
                             }
                             className={`text-left font-semibold text-slate-950 underline decoration-slate-300 underline-offset-2 hover:text-teal-800 ${
                               openableKinds.includes(relationship.target.kind)
@@ -228,9 +207,7 @@ export function KnowledgeView({
                     ))}
                   </div>
                 ) : (
-                  <p className="mt-4 text-sm text-slate-500">
-                    No linked records yet.
-                  </p>
+                  <p className="mt-4 text-sm text-slate-500">No linked records yet.</p>
                 )}
               </section>
             </article>

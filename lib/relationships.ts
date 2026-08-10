@@ -51,7 +51,13 @@ export async function getDirectRelationships(entityId: string): Promise<Relation
     relationships: rows.map((row) => ({
       direction: row.direction,
       label: row.label,
-      target: { id: row.id, kind: row.kind, label: row.target_label, summary: row.summary, meta: row.meta },
+      target: {
+        id: row.id,
+        kind: row.kind,
+        label: row.target_label,
+        summary: row.summary,
+        meta: row.meta,
+      },
     })),
   };
 }

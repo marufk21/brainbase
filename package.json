@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "tsc --noEmitOnError --outDir .test-build --module NodeNext --moduleResolution NodeNext --target ES2022 --esModuleInterop --skipLibCheck tests/knowledge.test.ts lib/knowledge.ts && node --test .test-build/tests/knowledge.test.js"
   },
   "dependencies": {
@@ -23,6 +25,8 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.9.6",
     "tailwindcss": "^4",
     "typescript": "^5"
   },

@@ -21,15 +21,14 @@ const navigation = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  const isActive = (href: string) =>
-    href === "/" ? pathname === "/" : pathname.startsWith(href);
+  const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-100 text-slate-950">
       <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/85 backdrop-blur-md">
         <div className="mx-auto flex h-16 w-full max-w-[1800px] items-center gap-4 px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex shrink-0 items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-teal-800 text-white shadow-sm">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-teal-500 to-teal-800 text-white shadow-sm">
               <LogoIcon className="h-5 w-5" />
             </span>
             <span className="text-lg font-bold tracking-tight">Brainbase</span>
@@ -98,9 +97,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
         </aside>
 
-        <main className="min-w-0 flex-1 px-4 pb-16 pt-6 sm:px-6 sm:pt-8 lg:px-8">
-          {children}
-        </main>
+        <main className="min-w-0 flex-1 px-4 pb-16 pt-6 sm:px-6 sm:pt-8 lg:px-8">{children}</main>
       </div>
 
       <footer className="border-t border-slate-200 bg-white">

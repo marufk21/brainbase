@@ -10,8 +10,7 @@ export default async function KnowledgePage(props: PageProps<"/knowledge">) {
   const selectedType = tabs.includes(searchParams.type as TabKind)
     ? (searchParams.type as TabKind)
     : "project";
-  const selectedId =
-    typeof searchParams.id === "string" ? searchParams.id : undefined;
+  const selectedId = typeof searchParams.id === "string" ? searchParams.id : undefined;
 
   return (
     <AppShell>

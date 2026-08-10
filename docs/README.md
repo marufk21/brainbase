@@ -4,10 +4,10 @@ This folder contains everything needed for the take-home assignment.
 
 ## Contents
 
-| Item | Description |
-|------|-------------|
+| Item                       | Description                                                          |
+| -------------------------- | -------------------------------------------------------------------- |
 | **Problem_Statement.docx** | Full problem statement and instructions. Give this to the candidate. |
-| **sample-data/** | Fictional sample data the candidate can use. |
+| **sample-data/**           | Fictional sample data the candidate can use.                         |
 
 ## How to use
 

@@ -37,29 +37,88 @@ describe("knowledge graph", () => {
     const graph = buildKnowledgeGraph(collections);
     const testEdges = graph.edges.filter((edge) => edge.from === "d-test" || edge.to === "d-test");
 
-    assert.ok(testEdges.some((edge) => edge.from === "proj001" && edge.to === "d-test" && edge.label === "has decision"));
-    assert.ok(testEdges.some((edge) => edge.from === "p001" && edge.to === "d-test" && edge.label === "made by"));
+    assert.ok(
+      testEdges.some(
+        (edge) => edge.from === "proj001" && edge.to === "d-test" && edge.label === "has decision",
+      ),
+    );
+    assert.ok(
+      testEdges.some(
+        (edge) => edge.from === "p001" && edge.to === "d-test" && edge.label === "made by",
+      ),
+    );
   });
 
   it("connects newly created client, person, project, and topic records", () => {
     const collections: KnowledgeCollections = {
       ...knowledge,
-      clients: [...knowledge.clients, { id: "c-test", name: "Test Client", industry: "Testing", size: "Small", primary_contact: "Casey", status: "Active", notes: "Created through CRUD." }],
-      people: [...knowledge.people, { id: "p-test", name: "Casey Tester", role: "QA", email: "casey@example.com", skills: ["Testing"] }],
-      topics: [...knowledge.topics, { id: "t-test", name: "CRUD Testing", description: "Testing managed records." }],
-      projects: [...knowledge.projects, { id: "proj-test", name: "CRUD Project", client_id: "c-test", status: "Discovery", start_date: "2026-08-10", lead: "p-test", team: ["p-test"], description: "A project created for graph verification.", key_topics: ["CRUD Testing"] }],
+      clients: [
+        ...knowledge.clients,
+        {
+          id: "c-test",
+          name: "Test Client",
+          industry: "Testing",
+          size: "Small",
+          primary_contact: "Casey",
+          status: "Active",
+          notes: "Created through CRUD.",
+        },
+      ],
+      people: [
+        ...knowledge.people,
+        {
+          id: "p-test",
+          name: "Casey Tester",
+          role: "QA",
+          email: "casey@example.com",
+          skills: ["Testing"],
+        },
+      ],
+      topics: [
+        ...knowledge.topics,
+        { id: "t-test", name: "CRUD Testing", description: "Testing managed records." },
+      ],
+      projects: [
+        ...knowledge.projects,
+        {
+          id: "proj-test",
+          name: "CRUD Project",
+          client_id: "c-test",
+          status: "Discovery",
+          start_date: "2026-08-10",
+          lead: "p-test",
+          team: ["p-test"],
+          description: "A project created for graph verification.",
+          key_topics: ["CRUD Testing"],
+        },
+      ],
     };
     const graph = buildKnowledgeGraph(collections);
 
-    assert.ok(graph.edges.some((edge) => edge.from === "c-test" && edge.to === "proj-test" && edge.label === "owns project"));
-    assert.ok(graph.edges.some((edge) => edge.from === "p-test" && edge.to === "proj-test" && edge.label === "works on"));
-    assert.ok(graph.edges.some((edge) => edge.from === "proj-test" && edge.to === "t-test" && edge.label === "uses topic"));
+    assert.ok(
+      graph.edges.some(
+        (edge) =>
+          edge.from === "c-test" && edge.to === "proj-test" && edge.label === "owns project",
+      ),
+    );
+    assert.ok(
+      graph.edges.some(
+        (edge) => edge.from === "p-test" && edge.to === "proj-test" && edge.label === "works on",
+      ),
+    );
+    assert.ok(
+      graph.edges.some(
+        (edge) => edge.from === "proj-test" && edge.to === "t-test" && edge.label === "uses topic",
+      ),
+    );
   });
 });
 
 describe("relationship-aware answers", () => {
   it("answers the Lexora team and decision question from linked records", () => {
-    const answer = answerQuestion("Who worked on the Lexora project and what key decisions were made?");
+    const answer = answerQuestion(
+      "Who worked on the Lexora project and what key decisions were made?",
+    );
     assert.match(answer.answer, /Rahul Mehta/);
     assert.ok(answer.path.map((step) => step.title).includes("Lexora Knowledge Core"));
     assert.ok(answer.evidence.some((item) => item.includes("pure vector search")));

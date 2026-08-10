@@ -6,12 +6,10 @@ type ManageKind = (typeof manageKinds)[number];
 
 export default async function ManagePage(props: PageProps<"/manage">) {
   const searchParams = await props.searchParams;
-  const editKind =
-    manageKinds.includes(searchParams.kind as ManageKind)
-      ? (searchParams.kind as ManageKind)
-      : undefined;
-  const editId =
-    typeof searchParams.id === "string" ? searchParams.id : undefined;
+  const editKind = manageKinds.includes(searchParams.kind as ManageKind)
+    ? (searchParams.kind as ManageKind)
+    : undefined;
+  const editId = typeof searchParams.id === "string" ? searchParams.id : undefined;
 
   return (
     <AppShell>

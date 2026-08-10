@@ -11,16 +11,24 @@ if (!process.env.DATABASE_URL) {
     const env = await readFile(resolve(root, ".env.local"), "utf8");
     const match = env.match(/^DATABASE_URL=(.*)$/m);
     if (match) process.env.DATABASE_URL = match[1].trim().replace(/^['"]|['"]$/g, "");
-  } catch { /* .env.local is optional */ }
+  } catch {
+    /* .env.local is optional */
+  }
 }
 if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is required");
 
 const seedSql = await new Promise((resolveSeed, reject) => {
   const child = spawn(process.execPath, ["db/seed.mjs"], { cwd: root });
   let output = "";
-  child.stdout.on("data", (chunk) => { output += chunk; });
+  child.stdout.on("data", (chunk) => {
+    output += chunk;
+  });
   child.on("error", reject);
-  child.on("exit", (code) => code === 0 ? resolveSeed(output) : reject(new Error(`Seed generation failed with exit code ${code}`)));
+  child.on("exit", (code) =>
+    code === 0
+      ? resolveSeed(output)
+      : reject(new Error(`Seed generation failed with exit code ${code}`)),
+  );
 });
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 try {

@@ -1,7 +1,14 @@
 import "server-only";
 import { database } from "@/lib/database";
 
-export const entities = ["people", "clients", "projects", "topics", "decisions", "documents"] as const;
+export const entities = [
+  "people",
+  "clients",
+  "projects",
+  "topics",
+  "decisions",
+  "documents",
+] as const;
 export type Entity = (typeof entities)[number];
 
 const fields: Record<Entity, string[]> = {
@@ -31,7 +38,10 @@ export async function create(entity: Entity, body: unknown) {
   if (!columns.length) throw new ApiError(400, "No valid fields supplied");
   const values = columns.map((column) => data[column]);
   const placeholders = columns.map((_, index) => `$${index + 1}`);
-  const result = await database().query(`INSERT INTO ${entity} (${columns.join(", ")}) VALUES (${placeholders.join(", ")}) RETURNING *`, values);
+  const result = await database().query(
+    `INSERT INTO ${entity} (${columns.join(", ")}) VALUES (${placeholders.join(", ")}) RETURNING *`,
+    values,
+  );
   return result.rows[0];
 }
 
@@ -41,7 +51,10 @@ export async function update(entity: Entity, id: string, body: unknown) {
   if (!columns.length) throw new ApiError(400, "No valid fields supplied");
   const assignments = columns.map((column, index) => `${column} = $${index + 1}`);
   assignments.push("updated_at = now()");
-  const result = await database().query(`UPDATE ${entity} SET ${assignments.join(", ")} WHERE id = $${columns.length + 1} RETURNING *`, [...columns.map((column) => data[column]), id]);
+  const result = await database().query(
+    `UPDATE ${entity} SET ${assignments.join(", ")} WHERE id = $${columns.length + 1} RETURNING *`,
+    [...columns.map((column) => data[column]), id],
+  );
   return result.rows[0] ?? null;
 }
 
@@ -51,17 +64,24 @@ export async function remove(entity: Entity, id: string) {
 }
 
 function sanitize(entity: Entity, body: unknown) {
-  if (!body || typeof body !== "object" || Array.isArray(body)) throw new ApiError(400, "Expected a JSON object");
+  if (!body || typeof body !== "object" || Array.isArray(body))
+    throw new ApiError(400, "Expected a JSON object");
   const source = body as Record<string, unknown>;
   const data: Record<string, unknown> = {};
   for (const field of fields[entity]) {
     if (source[field] !== undefined) data[field] = source[field];
   }
-  if (entity === "projects" && data.status) data.status = String(data.status).toLowerCase().replaceAll(" ", "_");
+  if (entity === "projects" && data.status)
+    data.status = String(data.status).toLowerCase().replaceAll(" ", "_");
   if (entity === "clients" && data.status) data.status = String(data.status).toLowerCase();
   return data;
 }
 
 export class ApiError extends Error {
-  constructor(readonly status: number, message: string) { super(message); }
+  constructor(
+    readonly status: number,
+    message: string,
+  ) {
+    super(message);
+  }
 }

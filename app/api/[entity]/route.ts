@@ -15,9 +15,13 @@ export async function POST(request: Request, context: RouteContext<"/api/[entity
 }
 
 async function respond(operation: () => Promise<unknown>, success = 200) {
-  try { return Response.json(await operation(), { status: success }); }
-  catch (error) {
+  try {
+    return Response.json(await operation(), { status: success });
+  } catch (error) {
     const status = error instanceof ApiError ? error.status : 503;
-    return Response.json({ error: error instanceof Error ? error.message : "Database request failed" }, { status });
+    return Response.json(
+      { error: error instanceof Error ? error.message : "Database request failed" },
+      { status },
+    );
   }
 }

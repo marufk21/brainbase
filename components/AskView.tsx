@@ -5,15 +5,31 @@ import { answerQuestion, sampleQuestions } from "@/lib/knowledge";
 import { useKnowledge } from "@/components/knowledge-store";
 import { ChatIcon, LinkIcon, SparkleIcon } from "@/components/icons";
 
+type RemoteAnswer = {
+  title: string;
+  answer: string;
+  evidence: { id: string; label: string; excerpt: string }[];
+  path: { title: string; via?: string }[];
+};
+
 export function AskView({ initialQuestion }: { initialQuestion: string }) {
   const { collections } = useKnowledge();
   const [draft, setDraft] = useState(initialQuestion);
   const [question, setQuestion] = useState(initialQuestion);
+  const [remote, setRemote] = useState<RemoteAnswer | null>(null);
   const response = answerQuestion(question, collections);
 
   const ask = (value: string) => {
     setDraft(value);
     setQuestion(value);
+    void fetch("/api/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: value }),
+    })
+      .then((result) => (result.ok ? result.json() : Promise.reject()))
+      .then((result) => setRemote(result))
+      .catch(() => setRemote(null));
   };
 
   return (
@@ -26,8 +42,8 @@ export function AskView({ initialQuestion }: { initialQuestion: string }) {
         Ask anything about company knowledge
       </h1>
       <p className="mt-2 max-w-2xl text-base leading-7 text-slate-600">
-        Answers are built by following the relationships between projects,
-        people, decisions, documents, and topics — not by keyword search.
+        Answers are built by following the relationships between projects, people, decisions,
+        documents, and topics — not by keyword search.
       </p>
 
       <section className="mt-6 grid items-start gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
@@ -37,7 +53,7 @@ export function AskView({ initialQuestion }: { initialQuestion: string }) {
             className="flex flex-col gap-3"
             onSubmit={(e) => {
               e.preventDefault();
-              setQuestion(draft);
+              ask(draft);
             }}
           >
             <label htmlFor="ask-question" className="text-sm font-semibold">
@@ -56,9 +72,7 @@ export function AskView({ initialQuestion }: { initialQuestion: string }) {
           </form>
 
           <div className="mt-6">
-            <h2 className="text-sm font-semibold text-slate-700">
-              Try a suggested question
-            </h2>
+            <h2 className="text-sm font-semibold text-slate-700">Try a suggested question</h2>
             <div className="mt-3 grid gap-2">
               {sampleQuestions.map((sample) => (
                 <button
@@ -80,10 +94,10 @@ export function AskView({ initialQuestion }: { initialQuestion: string }) {
             Answer
           </p>
           <h2 className="mt-3 text-xl font-bold leading-snug sm:text-2xl">
-            {response.title}
+            {remote?.title ?? response.title}
           </h2>
           <p className="mt-3 text-base leading-7 text-slate-700">
-            {response.answer}
+            {remote?.answer ?? response.answer}
           </p>
 
           <div className="mt-6 border-t border-slate-100 pt-5">
@@ -92,12 +106,12 @@ export function AskView({ initialQuestion }: { initialQuestion: string }) {
               The specific records the answer draws from.
             </p>
             <div className="mt-3 grid gap-2">
-              {response.evidence.map((item) => (
+              {(remote?.evidence ?? response.evidence).map((item) => (
                 <p
-                  key={item}
+                  key={typeof item === "string" ? item : item.id}
                   className="rounded-lg border-l-[3px] border-amber-400 bg-amber-50 px-4 py-2.5 text-sm leading-6 text-amber-950"
                 >
-                  {item}
+                  {typeof item === "string" ? item : `${item.label}: ${item.excerpt}`}
                 </p>
               ))}
             </div>
@@ -109,12 +123,12 @@ export function AskView({ initialQuestion }: { initialQuestion: string }) {
               Relationship path
             </h3>
             <p className="mt-1 text-sm text-slate-500">
-              Why the answer holds together — the entities are connected in the
-              graph, not just matched on words.
+              Why the answer holds together — the entities are connected in the graph, not just
+              matched on words.
             </p>
             <div className="mt-4 grid gap-0">
-              {response.path.map((step, index) => {
-                const next = response.path[index + 1];
+              {(remote?.path ?? response.path).map((step, index, path) => {
+                const next = path[index + 1];
                 const via = next?.via ?? "connected to";
                 return (
                   <div key={index}>
@@ -122,9 +136,7 @@ export function AskView({ initialQuestion }: { initialQuestion: string }) {
                       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-600 text-xs font-bold text-white">
                         {index + 1}
                       </span>
-                      <span className="font-medium text-slate-800">
-                        {step.title}
-                      </span>
+                      <span className="font-medium text-slate-800">{step.title}</span>
                     </div>
                     {next ? (
                       <div className="ml-[2.15rem] flex h-9 items-center gap-2 border-l-2 border-dashed border-teal-300 pl-5 text-xs font-semibold uppercase tracking-[0.12em] text-teal-700">

@@ -9,6 +9,9 @@ export async function GET(_request: Request, context: RouteContext<"/api/relatio
   } catch (error) {
     const message = error instanceof Error ? error.message : "Relationship query failed";
     const isInvalidId = /invalid input syntax for type uuid/i.test(message);
-    return Response.json({ error: isInvalidId ? "Entity ID must be a UUID" : message }, { status: isInvalidId ? 400 : 503 });
+    return Response.json(
+      { error: isInvalidId ? "Entity ID must be a UUID" : message },
+      { status: isInvalidId ? 400 : 503 },
+    );
   }
 }

@@ -46,9 +46,8 @@ export function HomeView() {
           </span>
         </h1>
         <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-          The connected knowledge base for projects, people, clients, documents,
-          decisions, and topics. Ask questions and get answers grounded in
-          relationships — not keyword search.
+          The connected knowledge base for projects, people, clients, documents, decisions, and
+          topics. Ask questions and get answers grounded in relationships — not keyword search.
         </p>
 
         <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
@@ -77,8 +76,8 @@ export function HomeView() {
           <div className="relative">
             <h2 className="text-2xl font-bold text-white">Ask Brainbase</h2>
             <p className="mt-2 text-sm leading-6 text-slate-300">
-              Ask anything about what we know — get an answer with evidence and
-              the relationship path behind it.
+              Ask anything about what we know — get an answer with evidence and the relationship
+              path behind it.
             </p>
           </div>
           <span className="relative inline-flex items-center gap-2 self-start rounded-full bg-teal-500/15 px-4 py-2 text-sm font-semibold text-teal-300 ring-1 ring-teal-400/30 transition group-hover:bg-teal-500/25">
@@ -99,9 +98,8 @@ export function HomeView() {
               Knowledge
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              Browse {collections.projects.length} projects,{" "}
-              {collections.people.length} people, {collections.clients.length}{" "}
-              clients, and {collections.decisions.length} decisions.
+              Browse {collections.projects.length} projects, {collections.people.length} people,{" "}
+              {collections.clients.length} clients, and {collections.decisions.length} decisions.
             </p>
           </Link>
           <Link
@@ -115,8 +113,7 @@ export function HomeView() {
               Add Knowledge
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              Record a decision or a note and link it to the rest of the
-              knowledge.
+              Record a decision or a note and link it to the rest of the knowledge.
             </p>
           </Link>
         </div>

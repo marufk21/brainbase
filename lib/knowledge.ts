@@ -1,11 +1,5 @@
 export type EntityKind =
-  | "client"
-  | "project"
-  | "person"
-  | "decision"
-  | "topic"
-  | "document"
-  | "message";
+  "client" | "project" | "person" | "decision" | "topic" | "document" | "message";
 
 export interface Client {
   id: string;
@@ -130,8 +124,7 @@ const clients = [
     size: "Startup",
     primary_contact: "Karan Malhotra",
     status: "Past",
-    notes:
-      "Completed a RAG pilot for internal research reports. Project closed in March 2025.",
+    notes: "Completed a RAG pilot for internal research reports. Project closed in March 2025.",
   },
   {
     id: "c004",
@@ -140,8 +133,7 @@ const clients = [
     size: "Mid-size",
     primary_contact: "Meera Iyer",
     status: "Active",
-    notes:
-      "Exploring knowledge base for technical documentation and field reports.",
+    notes: "Exploring knowledge base for technical documentation and field reports.",
   },
 ] as const;
 
@@ -305,8 +297,7 @@ const topics = [
   {
     id: "t003",
     name: "Structured Retrieval",
-    description:
-      "Going beyond keyword or pure vector search by using structure and relationships.",
+    description: "Going beyond keyword or pure vector search by using structure and relationships.",
   },
   {
     id: "t004",
@@ -317,8 +308,7 @@ const topics = [
   {
     id: "t005",
     name: "Internal Knowledge",
-    description:
-      "How a small team keeps track of its own decisions, projects, people and lessons.",
+    description: "How a small team keeps track of its own decisions, projects, people and lessons.",
   },
   {
     id: "t006",
@@ -356,8 +346,7 @@ const topics = [
   {
     id: "t012",
     name: "Decision Tracking",
-    description:
-      "Recording decisions, their rationale, participants, and downstream impact.",
+    description: "Recording decisions, their rationale, participants, and downstream impact.",
   },
 ] as const;
 
@@ -365,32 +354,27 @@ const slackMessages = [
   {
     ts: "2025-09-04T11:20:00Z",
     user: "Rahul Mehta",
-    text:
-      "After the Lexora kickoff I'm more convinced pure RAG won't cut it. Legal docs have heavy cross-references. We need proper linking.",
+    text: "After the Lexora kickoff I'm more convinced pure RAG won't cut it. Legal docs have heavy cross-references. We need proper linking.",
   },
   {
     ts: "2025-09-04T11:24:00Z",
     user: "Ananya Sharma",
-    text:
-      "Agreed. Let's capture that as a decision once the team aligns. Also flag it for the internal KB - same pattern keeps appearing.",
+    text: "Agreed. Let's capture that as a decision once the team aligns. Also flag it for the internal KB - same pattern keeps appearing.",
   },
   {
     ts: "2025-08-06T09:15:00Z",
     user: "Sneha Patel",
-    text:
-      "For internal KB v1 I'm skipping Slack import. Too much noise. We'll start with docs + decisions + people + projects.",
+    text: "For internal KB v1 I'm skipping Slack import. Too much noise. We'll start with docs + decisions + people + projects.",
   },
   {
     ts: "2025-11-29T16:40:00Z",
     user: "Vikram Singh",
-    text:
-      "MediSync workshop confirmed the same thing we saw in legal: clinicians care about the chain Condition -> Guideline -> Our protocol -> Evidence. Connections > documents.",
+    text: "MediSync workshop confirmed the same thing we saw in legal: clinicians care about the chain Condition -> Guideline -> Our protocol -> Evidence. Connections > documents.",
   },
   {
     ts: "2025-03-20T14:05:00Z",
     user: "Rahul Mehta",
-    text:
-      "FinEdge handover done. Biggest lesson: analysts still kept private notes because the system didn't capture how reports relate or evolve. We should not repeat that.",
+    text: "FinEdge handover done. Biggest lesson: analysts still kept private notes because the system didn't capture how reports relate or evolve. We should not repeat that.",
   },
 ] as const;
 
@@ -454,8 +438,7 @@ export const sampleQuestions = [
 ];
 
 export function buildKnowledgeGraph(collections: KnowledgeCollections = knowledge) {
-  const { clients, people, projects, decisions, topics, documents, slackMessages } =
-    collections;
+  const { clients, people, projects, decisions, topics, documents, slackMessages } = collections;
   const projectNodes = projects.map((project) => ({
     id: project.id,
     kind: "project" as const,
@@ -566,7 +549,9 @@ export function buildKnowledgeGraph(collections: KnowledgeCollections = knowledg
           .filter((project) => message.text.includes(project.name.split(" ")[0]))
           .map((project) => ({ from: messageId, to: project.id, label: "mentions" })),
         ...topics
-          .filter((topic) => message.text.toLowerCase().includes(topic.name.toLowerCase().split(" ")[0]))
+          .filter((topic) =>
+            message.text.toLowerCase().includes(topic.name.toLowerCase().split(" ")[0]),
+          )
           .map((topic) => ({ from: messageId, to: topic.id, label: "signals" })),
       ];
     }),
@@ -592,12 +577,18 @@ export function answerQuestion(
     if (!project) return emptyAnswer(projects);
     const team = project.team.map((id) => personById(people, id));
     const projectDecisions = decisions.filter((decision) => decision.project_id === project.id);
-    const client = project.client_id ? collections.clients.find((item) => item.id === project.client_id) : undefined;
+    const client = project.client_id
+      ? collections.clients.find((item) => item.id === project.client_id)
+      : undefined;
 
     return {
       title: "Lexora team and architecture decisions",
-      answer:
-        `${project.name} is led by ${personName(project.lead)} with ${team.filter(Boolean).map((person) => person.name).join(", ")} on the team. ${projectDecisions[0] ? `The key linked decision was “${projectDecisions[0].title}” because ${projectDecisions[0].summary}` : "No project decisions have been recorded yet."}`,
+      answer: `${project.name} is led by ${personName(project.lead)} with ${team
+        .filter(Boolean)
+        .map((person) => person.name)
+        .join(
+          ", ",
+        )} on the team. ${projectDecisions[0] ? `The key linked decision was “${projectDecisions[0].title}” because ${projectDecisions[0].summary}` : "No project decisions have been recorded yet."}`,
       evidence: [
         project.description,
         ...team.map((person) => `${person.name}: ${person.role}`),
@@ -622,12 +613,13 @@ export function answerQuestion(
     const sharedTopic = (handover?.topics ?? []).find((name) => lexora?.key_topics.includes(name));
     return {
       title: "FinEdge lesson reused for Lexora",
-      answer:
-        `${handover?.summary ?? "FinEdge has no linked handover document."} ${lexoraDecision ? `This supports Lexora’s later decision: ${lexoraDecision.summary}` : "No Lexora decision is linked yet."}`,
+      answer: `${handover?.summary ?? "FinEdge has no linked handover document."} ${lexoraDecision ? `This supports Lexora’s later decision: ${lexoraDecision.summary}` : "No Lexora decision is linked yet."}`,
       evidence: [
         ...(handover ? [`${handover.label}: ${handover.summary}`] : []),
         ...(lexoraDecision ? [`${lexoraDecision.date}: ${lexoraDecision.summary}`] : []),
-        ...slackMessages.filter((message) => message.text.toLowerCase().includes("finedge")).map((message) => `Slack, ${message.user}: ${message.text}`),
+        ...slackMessages
+          .filter((message) => message.text.toLowerCase().includes("finedge"))
+          .map((message) => `Slack, ${message.user}: ${message.text}`),
       ],
       path: pathFor([
         ...(finEdge ? [{ title: finEdge.name }] : []),
@@ -641,11 +633,12 @@ export function answerQuestion(
   if (normalized.includes("slack")) {
     const decision = decisions.find((item) => item.title.toLowerCase().includes("slack"));
     const project = decision?.project_id ? projectById(decision.project_id) : undefined;
-    const relatedMessages = slackMessages.filter((message) => message.text.toLowerCase().includes("slack"));
+    const relatedMessages = slackMessages.filter((message) =>
+      message.text.toLowerCase().includes("slack"),
+    );
     return {
       title: "Internal KB Slack scope decision",
-      answer:
-        `${decision?.summary ?? "No Slack decision has been recorded."} ${decision ? `It was made by ${personName(decision.made_by)} with ${decision.participants.map(personName).join(", ")} participating.` : ""}`,
+      answer: `${decision?.summary ?? "No Slack decision has been recorded."} ${decision ? `It was made by ${personName(decision.made_by)} with ${decision.participants.map(personName).join(", ")} participating.` : ""}`,
       evidence: [
         ...(decision ? [`${decision.date}: ${decision.title}`] : []),
         ...relatedMessages.map((message) => `Slack, ${message.user}: ${message.text}`),
@@ -654,15 +647,20 @@ export function answerQuestion(
       path: pathFor([
         ...(project ? [{ title: project.name }] : []),
         ...(decision ? [{ title: decision.title, via: "has decision" }] : []),
-        ...(decision && topicByName(decision.related_topics.find((name) => name === "Scope Control") ?? "")
+        ...(decision &&
+        topicByName(decision.related_topics.find((name) => name === "Scope Control") ?? "")
           ? [{ title: "Scope Control", via: "about" }]
           : []),
-        ...(relatedMessages[0] ? [{ title: `${relatedMessages[0].user} in #general`, via: "signalled by" }] : []),
+        ...(relatedMessages[0]
+          ? [{ title: `${relatedMessages[0].user} in #general`, via: "signalled by" }]
+          : []),
       ]),
     };
   }
 
-  const connected = graph.nodes.filter((node) => graph.edges.some((edge) => edge.from === node.id || edge.to === node.id));
+  const connected = graph.nodes.filter((node) =>
+    graph.edges.some((edge) => edge.from === node.id || edge.to === node.id),
+  );
   return {
     title: "Relationship-aware answer",
     answer:
@@ -717,9 +715,9 @@ export function getEntityRelationships(
   collections: KnowledgeCollections = knowledge,
 ) {
   const graph = buildKnowledgeGraph(collections);
-  const entity = graph.nodes.find(
-    (node) => node.kind === type && node.id === entityId,
-  ) ?? graph.nodes.find((node) => node.id === entityId);
+  const entity =
+    graph.nodes.find((node) => node.kind === type && node.id === entityId) ??
+    graph.nodes.find((node) => node.id === entityId);
 
   if (!entity) {
     return {
