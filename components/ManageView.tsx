@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useKnowledge } from "@/components/knowledge-store";
+import { CheckCircleIcon, PlusIcon } from "@/components/icons";
 import type {
   Decision,
   Document,
@@ -44,28 +45,29 @@ export function ManageView({
       : undefined;
 
   return (
-    <div className="max-w-5xl">
-      <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-700">
+    <div className="mx-auto w-full max-w-4xl">
+      <p className="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-teal-700 ring-1 ring-teal-100">
+        <PlusIcon className="h-3.5 w-3.5" />
         Add / Edit
       </p>
-      <h1 className="mt-2 text-3xl font-semibold tracking-normal md:text-4xl">
+      <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">
         Add knowledge
       </h1>
       <p className="mt-2 max-w-2xl text-base leading-7 text-slate-600">
-        Record a decision or a note/document and link it to the projects, people,
-        and topics it relates to. Everything saved here appears in Knowledge and is
-        used by Ask Brainbase.
+        Record a decision or a note/document and link it to the projects,
+        people, and topics it relates to. Everything saved here appears in
+        Knowledge and is used by Ask Brainbase.
       </p>
 
-      <div className="mt-6 flex flex-wrap gap-2">
+      <div className="mt-6 inline-flex w-full gap-1 rounded-xl border border-slate-200 bg-white p-1 shadow-sm sm:w-auto">
         {(["decision", "document"] as Kind[]).map((k) => (
           <button
             key={k}
             onClick={() => switchKind(k)}
-            className={`border px-3 py-2 text-sm font-semibold transition ${
+            className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition sm:flex-none ${
               kind === k
-                ? "border-slate-950 bg-slate-950 text-white"
-                : "border-slate-300 bg-white text-slate-700 hover:border-teal-500"
+                ? "bg-slate-950 text-white shadow-sm"
+                : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
             }`}
           >
             {k === "decision" ? "Add Decision" : "Add Document / Note"}
@@ -74,23 +76,28 @@ export function ManageView({
       </div>
 
       {saved ? (
-        <div className="mt-6 border border-teal-200 bg-teal-50 p-5">
-          <p className="text-base font-semibold text-teal-900">
-            Saved “{saved.label}”.
-          </p>
-          <p className="mt-1 text-sm text-teal-800">
-            It is now part of the knowledge system and its relationships.
-          </p>
+        <div className="mt-6 rounded-2xl border border-teal-200 bg-teal-50 p-6 shadow-sm">
+          <div className="flex items-start gap-3">
+            <CheckCircleIcon className="mt-0.5 h-6 w-6 shrink-0 text-teal-600" />
+            <div>
+              <p className="text-base font-semibold text-teal-900">
+                Saved “{saved.label}”.
+              </p>
+              <p className="mt-1 text-sm text-teal-800">
+                It is now part of the knowledge system and its relationships.
+              </p>
+            </div>
+          </div>
           <div className="mt-4 flex flex-wrap gap-3">
             <Link
               href={`/knowledge?type=${saved.kind}&id=${saved.id}`}
-              className="border border-slate-950 bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-800"
+              className="rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800"
             >
               View in Knowledge
             </Link>
             <button
               onClick={() => setSaved(null)}
-              className="border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
+              className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-500"
             >
               Add another
             </button>
@@ -133,6 +140,9 @@ export function ManageView({
     </div>
   );
 }
+
+const inputClass =
+  "h-11 w-full rounded-xl border border-slate-300 bg-white px-3.5 font-normal outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20";
 
 function DecisionForm({
   projects,
@@ -186,13 +196,13 @@ function DecisionForm({
 
   return (
     <form
-      className="mt-6 border border-slate-200 bg-white p-5"
+      className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
       onSubmit={(e) => {
         e.preventDefault();
         submit();
       }}
     >
-      <div className="grid gap-4">
+      <div className="grid gap-5">
         <label className="grid gap-2 text-sm font-semibold">
           Decision title
           <input
@@ -200,7 +210,7 @@ function DecisionForm({
             onChange={(e) => setTitle(e.target.value)}
             required
             placeholder="e.g. Use structured retrieval over pure RAG for Lexora"
-            className="h-11 border border-slate-300 px-3 font-normal outline-none focus:border-teal-700"
+            className={inputClass}
           />
         </label>
 
@@ -211,17 +221,17 @@ function DecisionForm({
             onChange={(e) => setSummary(e.target.value)}
             rows={4}
             placeholder="Why was this decided, and what does it mean going forward?"
-            className="resize-none border border-slate-300 p-3 font-normal leading-7 outline-none focus:border-teal-700"
+            className="w-full resize-none rounded-xl border border-slate-300 bg-white p-3.5 font-normal leading-7 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
           />
         </label>
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-5 md:grid-cols-2">
           <label className="grid gap-2 text-sm font-semibold">
             Project
             <select
               value={projectId}
               onChange={(e) => setProjectId(e.target.value)}
-              className="h-11 border border-slate-300 px-3 font-normal outline-none focus:border-teal-700"
+              className={inputClass}
             >
               <option value="">None (internal)</option>
               {projects.map((project) => (
@@ -237,7 +247,7 @@ function DecisionForm({
             <select
               value={madeBy}
               onChange={(e) => setMadeBy(e.target.value)}
-              className="h-11 border border-slate-300 px-3 font-normal outline-none focus:border-teal-700"
+              className={inputClass}
             >
               {people.map((person) => (
                 <option key={person.id} value={person.id}>
@@ -262,15 +272,15 @@ function DecisionForm({
           onToggle={(id) => toggle(topicIds, setTopicIds, id)}
         />
 
-        <div className="flex flex-wrap gap-3">
-          <button className="h-11 border border-slate-950 bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-teal-800">
+        <div className="flex flex-wrap gap-3 pt-1">
+          <button className="h-11 rounded-xl bg-slate-950 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800 active:scale-[0.99]">
             {initial ? "Save changes" : "Save decision"}
           </button>
           {onDelete ? (
             <button
               type="button"
               onClick={onDelete}
-              className="h-11 border border-rose-300 bg-white px-4 text-sm font-semibold text-rose-700 hover:bg-rose-50"
+              className="h-11 rounded-xl border border-rose-300 bg-white px-5 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
             >
               Delete
             </button>
@@ -280,7 +290,6 @@ function DecisionForm({
     </form>
   );
 }
-
 
 function DocumentForm({
   projects,
@@ -323,13 +332,13 @@ function DocumentForm({
 
   return (
     <form
-      className="mt-6 border border-slate-200 bg-white p-5"
+      className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
       onSubmit={(e) => {
         e.preventDefault();
         submit();
       }}
     >
-      <div className="grid gap-4">
+      <div className="grid gap-5">
         <label className="grid gap-2 text-sm font-semibold">
           Title / name
           <input
@@ -337,7 +346,7 @@ function DocumentForm({
             onChange={(e) => setLabel(e.target.value)}
             required
             placeholder="e.g. Lexora discovery notes"
-            className="h-11 border border-slate-300 px-3 font-normal outline-none focus:border-teal-700"
+            className={inputClass}
           />
         </label>
 
@@ -348,7 +357,7 @@ function DocumentForm({
             onChange={(e) => setSummary(e.target.value)}
             rows={4}
             placeholder="What does this document cover?"
-            className="resize-none border border-slate-300 p-3 font-normal leading-7 outline-none focus:border-teal-700"
+            className="w-full resize-none rounded-xl border border-slate-300 bg-white p-3.5 font-normal leading-7 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
           />
         </label>
 
@@ -366,8 +375,8 @@ function DocumentForm({
           onToggle={(id) => toggle(topicIds, setTopicIds, id)}
         />
 
-        <div className="flex flex-wrap gap-3">
-          <button className="h-11 border border-slate-950 bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-teal-800">
+        <div className="flex flex-wrap gap-3 pt-1">
+          <button className="h-11 rounded-xl bg-slate-950 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800 active:scale-[0.99]">
             {initial ? "Save changes" : "Save document"}
           </button>
         </div>
@@ -388,20 +397,31 @@ function CheckboxGroup({
   onToggle: (id: string) => void;
 }) {
   return (
-    <fieldset className="border border-slate-200 p-4">
+    <fieldset className="rounded-xl border border-slate-200 p-4">
       <legend className="px-2 text-sm font-semibold">{legend}</legend>
       {items.length > 0 ? (
-        <div className="mt-2 grid gap-2 md:grid-cols-2">
-          {items.map((item) => (
-            <label key={item.id} className="flex items-center gap-2 text-sm text-slate-700">
-              <input
-                type="checkbox"
-                checked={selected.includes(item.id)}
-                onChange={() => onToggle(item.id)}
-              />
-              {item.label}
-            </label>
-          ))}
+        <div className="mt-1 grid gap-2 sm:grid-cols-2">
+          {items.map((item) => {
+            const checked = selected.includes(item.id);
+            return (
+              <label
+                key={item.id}
+                className={`flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2.5 text-sm font-medium transition ${
+                  checked
+                    ? "border-teal-500 bg-teal-50 text-teal-900"
+                    : "border-slate-200 bg-white text-slate-700 hover:border-teal-300"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => onToggle(item.id)}
+                  className="h-4 w-4 shrink-0 accent-teal-600"
+                />
+                {item.label}
+              </label>
+            );
+          })}
         </div>
       ) : (
         <p className="mt-2 text-sm text-slate-500">Nothing available to link yet.</p>
@@ -409,4 +429,3 @@ function CheckboxGroup({
     </fieldset>
   );
 }
-
