@@ -7,6 +7,78 @@ export type EntityKind =
   | "document"
   | "message";
 
+export interface Client {
+  id: string;
+  name: string;
+  industry: string;
+  size: string;
+  primary_contact: string;
+  status: string;
+  notes: string;
+}
+
+export interface Person {
+  id: string;
+  name: string;
+  role: string;
+  email: string;
+  skills: string[];
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  client_id: string | null;
+  status: string;
+  start_date: string;
+  end_date?: string;
+  lead: string;
+  team: string[];
+  description: string;
+  key_topics: string[];
+}
+
+export interface Decision {
+  id: string;
+  title: string;
+  date: string;
+  project_id: string | null;
+  made_by: string;
+  participants: string[];
+  summary: string;
+  related_topics: string[];
+}
+
+export interface Topic {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export interface Document {
+  id: string;
+  label: string;
+  summary: string;
+  topics: string[];
+  projects: string[];
+}
+
+export interface SlackMessage {
+  ts: string;
+  user: string;
+  text: string;
+}
+
+export interface KnowledgeCollections {
+  clients: Client[];
+  people: Person[];
+  projects: Project[];
+  decisions: Decision[];
+  topics: Topic[];
+  documents: Document[];
+  slackMessages: SlackMessage[];
+}
+
 export type KnowledgeNode = {
   id: string;
   kind: EntityKind;
@@ -19,6 +91,15 @@ export type KnowledgeEdge = {
   from: string;
   to: string;
   label: string;
+};
+
+export type AnswerStep = { title: string; via?: string };
+
+export type AnswerResult = {
+  title: string;
+  answer: string;
+  evidence: string[];
+  path: AnswerStep[];
 };
 
 const clients = [
@@ -344,14 +425,14 @@ const documents = [
   },
 ] as const;
 
-export const knowledge = {
-  clients,
-  decisions,
-  documents,
-  people,
-  projects,
-  slackMessages,
-  topics,
+export const knowledge: KnowledgeCollections = {
+  clients: clients as unknown as Client[],
+  decisions: decisions as unknown as Decision[],
+  documents: documents as unknown as Document[],
+  people: people as unknown as Person[],
+  projects: projects as unknown as Project[],
+  slackMessages: slackMessages as unknown as SlackMessage[],
+  topics: topics as unknown as Topic[],
 };
 
 export const sampleQuestions = [
@@ -360,7 +441,9 @@ export const sampleQuestions = [
   "Why didn't we integrate Slack in the internal knowledge base?",
 ];
 
-export function buildKnowledgeGraph() {
+export function buildKnowledgeGraph(collections: KnowledgeCollections = knowledge) {
+  const { clients, people, projects, decisions, topics, documents, slackMessages } =
+    collections;
   const projectNodes = projects.map((project) => ({
     id: project.id,
     kind: "project" as const,
@@ -430,7 +513,7 @@ export function buildKnowledgeGraph() {
       })),
       ...project.key_topics.map((topicName) => ({
         from: project.id,
-        to: topicIdByName(topicName),
+        to: topicIdByName(topics, topicName),
         label: "uses topic",
       })),
     ]),
@@ -446,7 +529,7 @@ export function buildKnowledgeGraph() {
       })),
       ...decision.related_topics.map((topicName) => ({
         from: decision.id,
-        to: topicIdByName(topicName),
+        to: topicIdByName(topics, topicName),
         label: "about",
       })),
     ]),
@@ -458,14 +541,14 @@ export function buildKnowledgeGraph() {
       })),
       ...document.topics.map((topicName) => ({
         from: document.id,
-        to: topicIdByName(topicName),
+        to: topicIdByName(topics, topicName),
         label: "covers",
       })),
     ]),
     ...slackMessages.flatMap((message, index) => {
       const messageId = `msg-${index + 1}`;
       return [
-        { from: personIdByName(message.user), to: messageId, label: "wrote" },
+        { from: personIdByName(people, message.user), to: messageId, label: "wrote" },
         ...projects
           .filter((project) => message.text.includes(project.name.split(" ")[0]))
           .map((project) => ({ from: messageId, to: project.id, label: "mentions" })),
@@ -479,12 +562,16 @@ export function buildKnowledgeGraph() {
   return { nodes, edges };
 }
 
-export function answerQuestion(question: string) {
+export function answerQuestion(
+  question: string,
+  collections: KnowledgeCollections = knowledge,
+): AnswerResult {
+  const { people, projects, decisions } = collections;
   const normalized = question.toLowerCase();
 
   if (normalized.includes("lexora") && normalized.includes("worked")) {
     const project = projects.find((item) => item.id === "proj001")!;
-    const team = project.team.map(personById);
+    const team = project.team.map((id) => personById(people, id));
     const projectDecisions = decisions.filter((decision) => decision.project_id === project.id);
 
     return {
@@ -496,7 +583,12 @@ export function answerQuestion(question: string) {
         ...team.map((person) => `${person.name}: ${person.role}`),
         ...projectDecisions.map((decision) => `${decision.date}: ${decision.summary}`),
       ],
-      path: ["Lexora Legal", "Lexora Knowledge Core", "Decision d001", "Legal Knowledge"],
+      path: [
+        { title: "Lexora Legal" },
+        { title: "Lexora Knowledge Core", via: "owns project" },
+        { title: "Decision d001", via: "has decision" },
+        { title: "Legal Knowledge", via: "about" },
+      ],
     };
   }
 
@@ -510,7 +602,12 @@ export function answerQuestion(question: string) {
         "Lexora decision: pure vector search missed important legal relationships.",
         "Slack: Rahul noted the team should not repeat FinEdge's missing relationship model.",
       ],
-      path: ["FinEdge Research Assistant", "FinEdge handover", "Structured Retrieval", "Lexora decision"],
+      path: [
+        { title: "FinEdge Research Assistant" },
+        { title: "FinEdge handover", via: "reviewed in" },
+        { title: "Structured Retrieval", via: "lesson: relationships matter" },
+        { title: "Lexora decision", via: "influenced" },
+      ],
     };
   }
 
@@ -524,7 +621,12 @@ export function answerQuestion(question: string) {
         "Sneha's #general message repeats the same scope choice one day later.",
         "The decision is tied to Internal Knowledge, Team Memory, and Scope Control.",
       ],
-      path: ["Internal Knowledge Base (v1)", "Decision d002", "Scope Control", "#general message"],
+      path: [
+        { title: "Internal Knowledge Base (v1)" },
+        { title: "Decision d002", via: "has decision" },
+        { title: "Scope Control", via: "about" },
+        { title: "#general message", via: "signalled by" },
+      ],
     };
   }
 
@@ -533,14 +635,23 @@ export function answerQuestion(question: string) {
     answer:
       "The strongest matches are connected through projects, decisions, people, and topics. Try asking about Lexora, FinEdge lessons, MediSync discovery, or the Slack integration decision to see a richer explanation path.",
     evidence: projects.slice(0, 3).map((project) => `${project.name}: ${project.description}`),
-    path: ["Projects", "People", "Decisions", "Topics"],
+    path: [
+      { title: "Projects" },
+      { title: "People", via: "works on" },
+      { title: "Decisions", via: "made by" },
+      { title: "Topics", via: "about" },
+    ],
   };
 }
 
-export function getProjectDetails(projectId: string) {
+export function getProjectDetails(
+  projectId: string,
+  collections: KnowledgeCollections = knowledge,
+) {
+  const { projects, clients, decisions, documents, topics, people } = collections;
   const project = projects.find((item) => item.id === projectId) ?? projects[0];
   const client = clients.find((item) => item.id === project.client_id);
-  const projectPeople = project.team.map(personById);
+  const projectPeople = project.team.map((id) => personById(people, id));
   const projectDecisions = decisions.filter((decision) => decision.project_id === project.id);
   const projectDocuments = documents.filter((document) =>
     document.projects.some((projectRef) => projectRef === project.id),
@@ -558,8 +669,12 @@ export function getProjectDetails(projectId: string) {
   };
 }
 
-export function getEntityRelationships(type: EntityKind, entityId: string) {
-  const graph = buildKnowledgeGraph();
+export function getEntityRelationships(
+  type: EntityKind,
+  entityId: string,
+  collections: KnowledgeCollections = knowledge,
+) {
+  const graph = buildKnowledgeGraph(collections);
   const entity = graph.nodes.find(
     (node) => node.kind === type && node.id === entityId,
   ) ?? graph.nodes.find((node) => node.id === entityId);
@@ -597,14 +712,14 @@ export function getEntityRelationships(type: EntityKind, entityId: string) {
   return { entity, relationships };
 }
 
-function personById(personId: string) {
+function personById(people: Person[], personId: string) {
   return people.find((person) => person.id === personId)!;
 }
 
-function personIdByName(name: string) {
+function personIdByName(people: Person[], name: string) {
   return people.find((person) => person.name === name)?.id ?? "";
 }
 
-function topicIdByName(name: string) {
+function topicIdByName(topics: Topic[], name: string) {
   return topics.find((topic) => topic.name === name)?.id ?? name;
 }
