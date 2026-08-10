@@ -173,7 +173,7 @@ export function KnowledgeView({
                     {relationships.length} relationship
                     {relationships.length === 1 ? "" : "s"}
                   </span>
-                  {(entity.kind === "decision" || entity.kind === "document") && (
+                  {openableKinds.includes(entity.kind) && (
                     <Link
                       href={`/manage?kind=${entity.kind}&id=${entity.id}`}
                       className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:border-teal-500 hover:text-teal-900"

@@ -347,6 +347,18 @@ const topics = [
     description:
       "Capturing why decisions were made and what was learned so the team does not repeat work.",
   },
+  {
+    id: "t011",
+    name: "Guideline Linking",
+    description:
+      "Linking clinical conditions, guidelines, local protocols, and supporting evidence.",
+  },
+  {
+    id: "t012",
+    name: "Decision Tracking",
+    description:
+      "Recording decisions, their rationale, participants, and downstream impact.",
+  },
 ] as const;
 
 const slackMessages = [
@@ -500,6 +512,7 @@ export function buildKnowledgeGraph(collections: KnowledgeCollections = knowledg
     })),
   ];
 
+  const nodeIds = new Set(nodes.map((node) => node.id));
   const edges: KnowledgeEdge[] = [
     ...projects.flatMap((project) => [
       ...(project.client_id
@@ -557,7 +570,7 @@ export function buildKnowledgeGraph(collections: KnowledgeCollections = knowledg
           .map((topic) => ({ from: messageId, to: topic.id, label: "signals" })),
       ];
     }),
-  ].filter((edge) => edge.from && edge.to);
+  ].filter((edge) => edge.from && edge.to && nodeIds.has(edge.from) && nodeIds.has(edge.to));
 
   return { nodes, edges };
 }
@@ -566,81 +579,110 @@ export function answerQuestion(
   question: string,
   collections: KnowledgeCollections = knowledge,
 ): AnswerResult {
-  const { people, projects, decisions } = collections;
+  const { people, projects, decisions, documents, topics, slackMessages } = collections;
   const normalized = question.toLowerCase();
+  const graph = buildKnowledgeGraph(collections);
+  const projectById = (id: string) => projects.find((project) => project.id === id);
+  const personName = (id: string) => personById(people, id)?.name ?? "Unknown person";
+  const topicByName = (name: string) => topics.find((topic) => topic.name === name);
+  const pathFor = (nodes: Array<{ title: string; via?: string }>) => nodes;
 
   if (normalized.includes("lexora") && normalized.includes("worked")) {
-    const project = projects.find((item) => item.id === "proj001")!;
+    const project = projects.find((item) => item.name.toLowerCase().includes("lexora"));
+    if (!project) return emptyAnswer(projects);
     const team = project.team.map((id) => personById(people, id));
     const projectDecisions = decisions.filter((decision) => decision.project_id === project.id);
+    const client = project.client_id ? collections.clients.find((item) => item.id === project.client_id) : undefined;
 
     return {
       title: "Lexora team and architecture decisions",
       answer:
-        "Lexora Knowledge Core is led by Rahul Mehta with Priya Nair and Sneha Patel on the team. The major linked decision was to prefer structured knowledge over pure vector RAG because legal work depends on explicit case, statute, amendment, memo, and note relationships.",
+        `${project.name} is led by ${personName(project.lead)} with ${team.filter(Boolean).map((person) => person.name).join(", ")} on the team. ${projectDecisions[0] ? `The key linked decision was “${projectDecisions[0].title}” because ${projectDecisions[0].summary}` : "No project decisions have been recorded yet."}`,
       evidence: [
         project.description,
         ...team.map((person) => `${person.name}: ${person.role}`),
         ...projectDecisions.map((decision) => `${decision.date}: ${decision.summary}`),
       ],
-      path: [
-        { title: "Lexora Legal" },
-        { title: "Lexora Knowledge Core", via: "owns project" },
-        { title: "Decision d001", via: "has decision" },
-        { title: "Legal Knowledge", via: "about" },
-      ],
+      path: pathFor([
+        ...(client ? [{ title: client.name }] : []),
+        { title: project.name, via: client ? "owns project" : undefined },
+        ...(projectDecisions[0] ? [{ title: projectDecisions[0].title, via: "has decision" }] : []),
+        ...(projectDecisions[0] && topicByName(projectDecisions[0].related_topics[0])
+          ? [{ title: topicByName(projectDecisions[0].related_topics[0])!.name, via: "about" }]
+          : []),
+      ]),
     };
   }
 
   if (normalized.includes("finedge") && normalized.includes("lexora")) {
+    const finEdge = projects.find((project) => project.name.toLowerCase().includes("finedge"));
+    const lexora = projects.find((project) => project.name.toLowerCase().includes("lexora"));
+    const handover = documents.find((document) => document.projects.includes(finEdge?.id ?? ""));
+    const lexoraDecision = decisions.find((decision) => decision.project_id === lexora?.id);
+    const sharedTopic = (handover?.topics ?? []).find((name) => lexora?.key_topics.includes(name));
     return {
       title: "FinEdge lesson reused for Lexora",
       answer:
-        "FinEdge showed that pure retrieval helped find reports but failed to explain how knowledge changed over time. That lesson directly supports Lexora's structured-linking decision: both cases need relationships and idea evolution, not isolated document hits.",
+        `${handover?.summary ?? "FinEdge has no linked handover document."} ${lexoraDecision ? `This supports Lexora’s later decision: ${lexoraDecision.summary}` : "No Lexora decision is linked yet."}`,
       evidence: [
-        "FinEdge handover: relationships and evolution of ideas matter a lot.",
-        "Lexora decision: pure vector search missed important legal relationships.",
-        "Slack: Rahul noted the team should not repeat FinEdge's missing relationship model.",
+        ...(handover ? [`${handover.label}: ${handover.summary}`] : []),
+        ...(lexoraDecision ? [`${lexoraDecision.date}: ${lexoraDecision.summary}`] : []),
+        ...slackMessages.filter((message) => message.text.toLowerCase().includes("finedge")).map((message) => `Slack, ${message.user}: ${message.text}`),
       ],
-      path: [
-        { title: "FinEdge Research Assistant" },
-        { title: "FinEdge handover", via: "reviewed in" },
-        { title: "Structured Retrieval", via: "lesson: relationships matter" },
-        { title: "Lexora decision", via: "influenced" },
-      ],
+      path: pathFor([
+        ...(finEdge ? [{ title: finEdge.name }] : []),
+        ...(handover ? [{ title: handover.label, via: "mentions" }] : []),
+        ...(sharedTopic ? [{ title: sharedTopic, via: "covers" }] : []),
+        ...(lexoraDecision ? [{ title: lexoraDecision.title, via: "about" }] : []),
+      ]),
     };
   }
 
   if (normalized.includes("slack")) {
+    const decision = decisions.find((item) => item.title.toLowerCase().includes("slack"));
+    const project = decision?.project_id ? projectById(decision.project_id) : undefined;
+    const relatedMessages = slackMessages.filter((message) => message.text.toLowerCase().includes("slack"));
     return {
       title: "Internal KB Slack scope decision",
       answer:
-        "The team decided not to build a full Slack integration in v1 because Slack was considered too noisy. The internal KB should start with documents, decisions, people, and projects, with Slack added later only if the signal is worth the complexity.",
+        `${decision?.summary ?? "No Slack decision has been recorded."} ${decision ? `It was made by ${personName(decision.made_by)} with ${decision.participants.map(personName).join(", ")} participating.` : ""}`,
       evidence: [
-        "Decision d002 was made by Ananya Sharma with Sneha Patel and Arjun Reddy participating.",
-        "Sneha's #general message repeats the same scope choice one day later.",
-        "The decision is tied to Internal Knowledge, Team Memory, and Scope Control.",
+        ...(decision ? [`${decision.date}: ${decision.title}`] : []),
+        ...relatedMessages.map((message) => `Slack, ${message.user}: ${message.text}`),
+        ...(decision ? [`Related topics: ${decision.related_topics.join(", ")}`] : []),
       ],
-      path: [
-        { title: "Internal Knowledge Base (v1)" },
-        { title: "Decision d002", via: "has decision" },
-        { title: "Scope Control", via: "about" },
-        { title: "#general message", via: "signalled by" },
-      ],
+      path: pathFor([
+        ...(project ? [{ title: project.name }] : []),
+        ...(decision ? [{ title: decision.title, via: "has decision" }] : []),
+        ...(decision && topicByName(decision.related_topics.find((name) => name === "Scope Control") ?? "")
+          ? [{ title: "Scope Control", via: "about" }]
+          : []),
+        ...(relatedMessages[0] ? [{ title: `${relatedMessages[0].user} in #general`, via: "signalled by" }] : []),
+      ]),
     };
   }
 
+  const connected = graph.nodes.filter((node) => graph.edges.some((edge) => edge.from === node.id || edge.to === node.id));
   return {
     title: "Relationship-aware answer",
     answer:
       "The strongest matches are connected through projects, decisions, people, and topics. Try asking about Lexora, FinEdge lessons, MediSync discovery, or the Slack integration decision to see a richer explanation path.",
-    evidence: projects.slice(0, 3).map((project) => `${project.name}: ${project.description}`),
+    evidence: connected.slice(0, 3).map((node) => `${node.label}: ${node.summary}`),
     path: [
       { title: "Projects" },
       { title: "People", via: "works on" },
       { title: "Decisions", via: "made by" },
       { title: "Topics", via: "about" },
     ],
+  };
+}
+
+function emptyAnswer(projects: Project[]): AnswerResult {
+  return {
+    title: "No connected answer found",
+    answer: "There is not enough linked knowledge to answer that question yet.",
+    evidence: projects.slice(0, 3).map((project) => `${project.name}: ${project.description}`),
+    path: [{ title: "Projects" }],
   };
 }
 

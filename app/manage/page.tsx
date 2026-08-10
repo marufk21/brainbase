@@ -1,12 +1,13 @@
 import { AppShell } from "@/components/AppShell";
 import { ManageView } from "@/components/ManageView";
 
-type ManageKind = "decision" | "document";
+const manageKinds = ["client", "person", "project", "topic", "decision", "document"] as const;
+type ManageKind = (typeof manageKinds)[number];
 
 export default async function ManagePage(props: PageProps<"/manage">) {
   const searchParams = await props.searchParams;
   const editKind =
-    searchParams.kind === "decision" || searchParams.kind === "document"
+    manageKinds.includes(searchParams.kind as ManageKind)
       ? (searchParams.kind as ManageKind)
       : undefined;
   const editId =

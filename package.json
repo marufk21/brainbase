@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "tsc --noEmitOnError --outDir .test-build --module NodeNext --moduleResolution NodeNext --target ES2022 --esModuleInterop --skipLibCheck tests/knowledge.test.ts lib/knowledge.ts && node --test .test-build/tests/knowledge.test.js"
   },
   "dependencies": {
     "next": "16.3.0",
