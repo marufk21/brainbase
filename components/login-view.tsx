@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { LogoIcon } from "@/components/icons";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/use-auth";
 import { DEMO_ACCOUNT, HOME_PATH, isAuthenticated } from "@/lib/auth";
 
 /**

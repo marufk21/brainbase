@@ -1,5 +1,5 @@
-import { AppShell } from "@/components/AppShell";
-import { KnowledgeView } from "@/components/KnowledgeView";
+import { AppShell } from "@/components/app-shell";
+import { KnowledgeView } from "@/components/knowledge-view";
 
 const tabs = ["project", "person", "client", "decision", "document", "topic"] as const;
 

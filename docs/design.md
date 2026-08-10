@@ -1,57 +1,143 @@
 # Brainbase design document
 
-## Problem understanding
+This document explains how Brainbase works, why it was designed this way, and what it does not do yet. For setup steps, see the [README](../README.md).
 
-A small consulting team needs a shared memory for client work. The important requirement is not document search alone: a useful answer must expose how people, projects, decisions, source documents, topics, and discussion messages are connected. Brainbase therefore prioritises explicit links and inspectable evidence over a broad but opaque search experience.
+## 1. Problem understanding
 
-## Architecture
+A small consulting team (8–15 people) keeps its knowledge in Notion, Slack, Google Docs, emails, and people's heads. The core pain is not finding a single document — it is losing the **connections** between people, projects, decisions, and topics.
 
-The application is a Next.js App Router application. Interactive views are client components because they need form state and browser persistence. The root provider owns the current `KnowledgeCollections` state and persists it to `localStorage`; it is deliberately isolated so a future API/database implementation can replace it.
+So the key requirement is: **answers must show how things are connected, with inspectable evidence.** Brainbase therefore prioritises explicit links over broad but opaque keyword search.
 
-`lib/knowledge.ts` contains the typed data model, seed data, graph builder, answer logic, and relationship lookup helper. The graph builder creates one node per entity and labeled directed edges such as `works on`, `has decision`, `covers`, and `about`. Views rebuild their graph from the current collection, so a saved decision or document immediately appears in exploration and answer evidence.
+## 2. Architecture overview
 
-## Data flow and intentional dual paths
+Brainbase is a Next.js App Router application. Interactive views are client components because they need forms and browser persistence.
 
-The client data flow is `UI → hooks/store → API service (lib/api-client.ts) → API routes → server services (lib/entity-api.ts, lib/ask-engine.ts, lib/relationships.ts) → PostgreSQL`. Components never call `fetch` directly: `hooks/useAsk.ts` owns the `/api/ask` request with loading and error state, and `components/knowledge-store.tsx` hydrates collections through `fetchKnowledgeSnapshot()`.
+The layers are strictly separated, and data flows one way:
 
-Two deliberate fallbacks keep the demo runnable without any credentials:
+```
+UI components → hooks → API service (lib/api-client.ts) → API routes → server services → PostgreSQL
+```
 
-- If `/api/knowledge` is unreachable (no `DATABASE_URL`), the store falls back to locally persisted collections (`localStorage`) seeded from the fictional sample data, so CRUD edits still survive reloads.
-- If `/api/ask` is unreachable, the Ask view shows the answer from the deterministic local engine in `lib/knowledge.ts`, which is also the engine exercised by the automated tests. When the database is reachable, the DB-backed answer takes precedence and the UI says so when it is not.
+Rules this design follows:
 
-Shared domain types live in `lib/types.ts`, which is client-safe by design (no `server-only` imports); `lib/knowledge.ts` re-exports them for the tests and views.
+- **Components never call `fetch` directly.** All HTTP lives in [lib/api-client.ts](../lib/api-client.ts).
+- **Hooks own request state.** `hooks/use-ask.ts` handles the `/api/ask` request with loading and error state.
+- **Types are shared and client-safe.** All domain types live in [lib/types.ts](../lib/types.ts) with no `server-only` imports, so client, server, and tests use one model.
+- **The persistence source is swappable.** The knowledge store is isolated so a database can replace browser storage without touching the UI.
 
-## Database decision: PostgreSQL with explicit edge tables
+## 3. Data model
 
-The production persistence design uses PostgreSQL, defined in [`db/schema.sql`](../db/schema.sql). PostgreSQL is the right first choice because Brainbase has a small, well-defined set of entities, needs reliable CRUD, constraints, migrations, and simple operational tooling. It also supports recursive CTEs when multi-hop relationship queries are needed. Neo4j would make sense later if arbitrary deep graph traversal became the dominant workload, but it adds a second data platform without improving the current assignment MVP enough to justify it.
+Seven entity types, defined in [lib/types.ts](../lib/types.ts):
 
-The schema keeps graph semantics explicit through join tables: `project_clients`, `project_team`, `project_topics`, `decision_projects`, `decision_people`, `decision_topics`, and typed document-link tables. Typed document links are preferred over one polymorphic `entity_id` edge table because PostgreSQL can enforce foreign keys for every endpoint. Unique constraints encode important business rules such as one active client link per project, one project lead, and one decision owner. `db/seed.mjs` parses every JSON, Markdown, and Slack excerpt source under `data/`, creates deterministic UUIDs, and populates both records and edges.
+| Entity   | Represents                             | Key links                             |
+| -------- | -------------------------------------- | ------------------------------------- |
+| client   | A client organisation                  | —                                     |
+| person   | A team member                          | skills                                |
+| project  | Client work over time                  | client, lead + team, topics           |
+| decision | A recorded decision with context       | project, owner + participants, topics |
+| topic    | A recurring concept                    | —                                     |
+| document | A note, summary, or excerpt            | projects, topics                      |
+| message  | A Slack-style message kept as evidence | author, mentioned projects/topics     |
 
-## Data model and relationship approach
+### Relationships are explicit edges
 
-The main entity types are client, project, person, decision, topic, document, and message. IDs are normalized and each reference creates an edge. For example, a decision links to its project, author, participants, and topics. Documents link to their projects and topics. Slack excerpts link to their author and recognized project/topic references.
+Every reference from one record to another becomes a labeled, directed edge. The graph builder in [lib/knowledge.ts](../lib/knowledge.ts) creates one node per entity and edges such as:
 
-The answer layer selects a supported intent, then obtains the project, decision, document, people, topic, and message evidence from the current collections. It produces a visible path using the same relationship labels used in the graph. This keeps example answers deterministic and makes their supporting records inspectable.
+- person `works on` project, and `leads` it when they are the lead
+- client `owns project` project
+- project `uses topic` topic
+- project `has decision` decision; the decision is `made by` its owner and people `participated` in it
+- decision `about` topic
+- document `mentions` project and `covers` topic
+- person `wrote` message; a message `mentions` projects and `signals` topics
 
-## What works
+Views rebuild the graph from the current collections, so a saved decision or document appears in exploration and answer evidence immediately.
 
-- Knowledge browsing across all required core entity types.
-- Direct relationship exploration with labels and click-through navigation.
-- Relationship-aware answers for the three supplied example styles.
-- Full CRUD for clients, people, projects, topics, decisions, and documents, with immediate graph updates and local persistence.
-- Automated tests for graph validity, newly added decision links, and the three example answer flows.
+## 4. The answer engine
 
-## Trade-offs and incomplete work
+Answering a question is a three-step, deterministic process:
 
-- Persistence is local to one browser. A production system should use a database, authenticated API, migrations, and audit history.
-- The answer interpreter supports high-value deterministic intents rather than unrestricted natural-language reasoning. An LLM can be added later, but it should retrieve graph-backed evidence and cite the links it used.
-- Message-to-topic links use simple text recognition because the assignment data is intentionally small. A production ingestion pipeline would use structured metadata and human review.
-- There is no real external integration. The assignment permits sample files and does not require every source to be integrated.
+1. **Pick an intent** — the question is classified into a supported intent (team + decisions of a project, lessons transferred between projects, everything around a decision, …).
+2. **Walk the graph** — the engine gathers the project, decision, document, people, topic, and message records connected to the subject.
+3. **Explain itself** — the answer returns an `answer`, an `evidence` list of supporting records, and a `path` using the same labels as the graph (e.g. Lexora → has decision → Prefer structured linking).
 
-## Testing and validation
+This keeps answers **deterministic and inspectable**: you can always click through to the records that produced the answer. There are two engines with identical behaviour:
 
-Run `npm run lint`, `npm run test`, and `npm run build`. Tests validate that every edge points to a real node, a new linked decision produces expected graph edges, and each example question returns its expected linked evidence/path. Manual QA should include creating a decision and document, following their links in Knowledge, and verifying the mobile layout.
+- **Local engine** in [lib/knowledge.ts](../lib/knowledge.ts) — runs in the browser, used by tests and as the fallback.
+- **DB engine** in [lib/ask-engine.ts](../lib/ask-engine.ts) — runs server-side against PostgreSQL via `POST /api/ask`.
 
-## Future improvements
+## 5. Dual persistence by design
 
-Move collections to SQLite or Postgres, add authentication and roles, ingest a single source such as Google Docs or Slack, add document parsing and citations, and use graph-grounded LLM answers with provenance and feedback evaluation.
+The demo must run with zero credentials, but the design should show a real production path. So there are two deliberate fallbacks:
+
+| If…                                                 | Then…                                                                                                           |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `/api/knowledge` is unreachable (no `DATABASE_URL`) | The store falls back to `localStorage` seeded with the fictional sample data; CRUD edits still survive reloads. |
+| `/api/ask` is unreachable                           | The Ask view uses the deterministic local engine, and the UI says so.                                           |
+
+When `DATABASE_URL` is set, the DB-backed path takes precedence for both reads and writes.
+
+### Why PostgreSQL, and why explicit edge tables
+
+PostgreSQL fits because Brainbase has a small, well-defined set of entities and needs reliable CRUD, constraints, migrations, and simple tooling. It also supports recursive CTEs if multi-hop queries are needed later. Neo4j was rejected for now: it would add a second data platform without improving the MVP; it becomes worth it only if arbitrary deep graph traversal becomes the dominant workload.
+
+The schema in [db/schema.sql](../db/schema.sql) keeps graph semantics in typed join tables: `project_clients`, `project_team`, `project_topics`, `decision_projects`, `decision_people`, `decision_topics`, and typed document/message link tables. Two conscious choices:
+
+- **Typed link tables instead of one polymorphic `entity_id` edge table** — PostgreSQL can then enforce a foreign key on every endpoint, so an edge can never point at a missing record.
+- **Unique constraints encode business rules** — one active client link per project, one project lead (`project_team_one_lead`), one decision owner (`decision_people_one_owner`).
+
+[db/seed.mjs](../db/seed.mjs) parses every JSON, Markdown, and Slack source under `data/`, creates deterministic UUIDs, and populates records and edges. [db/apply.mjs](../db/apply.mjs) applies schema + seed to an empty database.
+
+## 6. Authentication
+
+Authentication is **frontend-only and intentionally not production-grade** (the assignment allows basic auth):
+
+- One hard-coded demo account, checked in the browser in [lib/auth.ts](../lib/auth.ts).
+- Session stored in `sessionStorage`; survives refreshes, cleared on logout.
+- A single `resolveAuthRedirect()` function decides redirects: protected views send visitors to `/login`, and logged-in users on `/login` go home.
+- The auth logic accepts an injected storage object, so it is fully testable without a browser (see `tests/auth.test.ts`).
+
+## 7. What works
+
+- Knowledge browsing across all core entity types.
+- Relationship exploration with labels and click-through navigation.
+- Relationship-aware answers for the three example question styles.
+- Full CRUD for clients, people, projects, topics, decisions, and documents, with immediate graph updates and persistence.
+- Optional PostgreSQL mode with the same API surface.
+- Automated tests for graph validity, new-decision edges, the three example answers, and auth.
+
+## 8. Trade-offs and incomplete work
+
+| Decision                                                | Why                                      | What a production version would do                                          |
+| ------------------------------------------------------- | ---------------------------------------- | --------------------------------------------------------------------------- |
+| Browser `localStorage` fallback                         | Demo must run with no credentials        | Database, authenticated API, migrations, audit history                      |
+| Deterministic intents instead of free-form NL reasoning | Answers must be inspectable and testable | Add an LLM that retrieves graph-backed evidence and cites the links it used |
+| Simple text recognition for message→topic links         | Sample dataset is intentionally small    | Structured metadata at ingestion plus human review                          |
+| No real external integrations                           | Assignment permits sample files          | Ingest one source (e.g. Google Docs or Slack) properly                      |
+
+## 9. Testing and validation
+
+Automated checks:
+
+```bash
+pnpm lint
+pnpm test
+pnpm build
+```
+
+The tests verify that:
+
+- every graph edge points to a real node;
+- adding a linked decision produces the expected new edges;
+- each of the three example questions returns its expected evidence and path;
+- login, logout, session parsing, and redirect logic behave correctly.
+
+Recommended manual QA: log in, create a decision and a document, follow their links in Knowledge, ask one of the example questions, and check the mobile layout.
+
+## 10. Future improvements
+
+1. Real authentication with roles.
+2. Ingest one live source (Google Docs or Slack).
+3. Document parsing with citations.
+4. Graph-grounded LLM answers with provenance and feedback evaluation.
+5. Multi-hop traversal (recursive CTEs, or Neo4j if that becomes the dominant workload).

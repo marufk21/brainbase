@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LoginView } from "@/components/LoginView";
+import { LoginView } from "@/components/login-view";
 
 export const metadata: Metadata = {
   title: "Sign in · Brainbase",

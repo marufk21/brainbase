@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { AuthGuard } from "@/components/AuthGuard";
+import { AuthGuard } from "@/components/auth-guard";
 import {
   ChatIcon,
   DatabaseIcon,
@@ -12,7 +12,7 @@ import {
   PlusIcon,
   SearchIcon,
 } from "@/components/icons";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/use-auth";
 import { LOGIN_PATH } from "@/lib/auth";
 
 const navigation = [

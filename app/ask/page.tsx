@@ -1,5 +1,5 @@
-import { AppShell } from "@/components/AppShell";
-import { AskView } from "@/components/AskView";
+import { AppShell } from "@/components/app-shell";
+import { AskView } from "@/components/ask-view";
 import { sampleQuestions } from "@/lib/knowledge";
 
 export default async function AskPage(props: PageProps<"/ask">) {

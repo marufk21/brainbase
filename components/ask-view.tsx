@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { answerQuestion, sampleQuestions } from "@/lib/knowledge";
-import { useAsk } from "@/hooks/useAsk";
+import { useAsk } from "@/hooks/use-ask";
 import { useKnowledge } from "@/components/knowledge-store";
 import { ChatIcon, LinkIcon, SparkleIcon } from "@/components/icons";
 
