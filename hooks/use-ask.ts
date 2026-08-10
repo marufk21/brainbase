@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { askRemoteQuestion } from "@/lib/client/api-client";
 import type { AskResult } from "@/lib/types";
 
@@ -8,10 +8,11 @@ import type { AskResult } from "@/lib/types";
  * Owns the DB-backed answer request (POST /api/ask).
  * The local deterministic engine in lib/knowledge.ts stays the always-available
  * fallback; this hook layers the database answer on top with loading/error state.
+ * No request fires until ask() is called — answers only appear on submit.
  */
-export function useAsk(initialQuestion: string) {
+export function useAsk() {
   const [remote, setRemote] = useState<AskResult | null>(null);
-  const [isLoading, setIsLoading] = useState(() => Boolean(initialQuestion.trim()));
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestIdRef = useRef(0);
 
@@ -40,11 +41,6 @@ export function useAsk(initialQuestion: string) {
     },
     [run],
   );
-
-  // Deep links (/ask?q=...) should hit the DB engine too, not only the local one.
-  useEffect(() => {
-    if (initialQuestion.trim()) run(initialQuestion);
-  }, [initialQuestion, run]);
 
   return { remote, isLoading, error, ask };
 }

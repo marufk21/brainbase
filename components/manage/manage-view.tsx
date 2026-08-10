@@ -28,7 +28,7 @@ export type { Kind } from "@/components/manage/types";
 
 export function ManageView({ editKind, editId }: { editKind?: Kind; editId?: string }) {
     const store = useKnowledge();
-    const [kind, setKind] = useState<Kind>(editKind ?? "decision");
+    const [kind, setKind] = useState<Kind>(editKind ?? "client");
     const [saved, setSaved] = useState<Saved | null>(null);
     const initial = editKind && editId ? findInitial(editKind, editId, store.collections) : undefined;
     const done = (item: Saved) => setSaved(item);
@@ -38,7 +38,7 @@ export function ManageView({ editKind, editId }: { editKind?: Kind; editId?: str
     };
 
     return (
-        <div className="mx-auto w-full max-w-4xl">
+        <div className="w-full">
             <p className="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-teal-700 ring-1 ring-teal-100">
                 <PlusIcon className="h-3.5 w-3.5" />
                 Add / Edit
