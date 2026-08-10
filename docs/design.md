@@ -10,6 +10,12 @@ The application is a Next.js App Router application. Interactive views are clien
 
 `lib/knowledge.ts` contains the typed data model, seed data, graph builder, answer logic, and relationship lookup helper. The graph builder creates one node per entity and labeled directed edges such as `works on`, `has decision`, `covers`, and `about`. Views rebuild their graph from the current collection, so a saved decision or document immediately appears in exploration and answer evidence.
 
+## Database decision: PostgreSQL with explicit edge tables
+
+The production persistence design uses PostgreSQL, defined in [`db/schema.sql`](../db/schema.sql). PostgreSQL is the right first choice because Brainbase has a small, well-defined set of entities, needs reliable CRUD, constraints, migrations, and simple operational tooling. It also supports recursive CTEs when multi-hop relationship queries are needed. Neo4j would make sense later if arbitrary deep graph traversal became the dominant workload, but it adds a second data platform without improving the current assignment MVP enough to justify it.
+
+The schema keeps graph semantics explicit through join tables: `project_clients`, `project_team`, `project_topics`, `decision_projects`, `decision_people`, `decision_topics`, and typed document-link tables. Typed document links are preferred over one polymorphic `entity_id` edge table because PostgreSQL can enforce foreign keys for every endpoint. Unique constraints encode important business rules such as one active client link per project, one project lead, and one decision owner. `db/seed.mjs` parses every JSON, Markdown, and Slack excerpt source under `data/`, creates deterministic UUIDs, and populates both records and edges.
+
 ## Data model and relationship approach
 
 The main entity types are client, project, person, decision, topic, document, and message. IDs are normalized and each reference creates an edge. For example, a decision links to its project, author, participants, and topics. Documents link to their projects and topics. Slack excerpts link to their author and recognized project/topic references.

@@ -38,3 +38,9 @@ npm run build
 The app uses Next.js, React, TypeScript, and local JSON-derived seed data. The graph is built in `lib/knowledge.ts`; entity changes update the in-browser collection, and graph edges are rebuilt from those records. This MVP intentionally uses browser-only persistence and a deterministic answer layer, so it does not require credentials, a database, or an LLM.
 
 See [the design document](docs/design.md) for the architecture, trade-offs, and remaining limitations.
+
+## Production database schema
+
+The proposed PostgreSQL schema and explicit relationship tables are in [db/schema.sql](db/schema.sql). See [db/README.md](db/README.md) for how to apply it to an empty database.
+
+With `DATABASE_URL` configured, CRUD REST endpoints are available at `/api/people`, `/api/clients`, `/api/projects`, `/api/topics`, `/api/decisions`, and `/api/documents`.
