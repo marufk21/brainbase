@@ -9,7 +9,7 @@
     "lint": "eslint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "tsc --noEmitOnError --outDir .test-build --module NodeNext --moduleResolution NodeNext --target ES2022 --esModuleInterop --skipLibCheck tests/knowledge.test.ts lib/knowledge.ts && node --test .test-build/tests/knowledge.test.js"
+    "test": "tsc --noEmitOnError --outDir .test-build --module NodeNext --moduleResolution NodeNext --target ES2022 --esModuleInterop --skipLibCheck tests/knowledge.test.ts tests/auth.test.ts lib/knowledge.ts lib/auth.ts && node --test .test-build/tests/knowledge.test.js .test-build/tests/auth.test.js"
   },
   "dependencies": {
     "@types/pg": "^8.21.0",

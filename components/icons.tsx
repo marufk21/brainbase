@@ -107,6 +107,15 @@ export function SparkleIcon({ className }: IconProps) {
   );
 }
 
+export function LogoutIcon({ className }: IconProps) {
+  return (
+    <svg {...base(className)}>
+      <path d="M14 4H6v16h8" />
+      <path d="M10 12h11m0 0-3.5-3.5M21 12l-3.5 3.5" />
+    </svg>
+  );
+}
+
 export function LinkIcon({ className }: IconProps) {
   return (
     <svg {...base(className)}>

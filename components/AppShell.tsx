@@ -1,15 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { AuthGuard } from "@/components/AuthGuard";
 import {
   ChatIcon,
   DatabaseIcon,
   HomeIcon,
   LogoIcon,
+  LogoutIcon,
   PlusIcon,
   SearchIcon,
 } from "@/components/icons";
+import { useAuth } from "@/hooks/useAuth";
+import { LOGIN_PATH } from "@/lib/auth";
 
 const navigation = [
   { href: "/", label: "Overview", icon: HomeIcon },
@@ -19,9 +23,33 @@ const navigation = [
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthGuard>
+      <AppShellLayout>{children}</AppShellLayout>
+    </AuthGuard>
+  );
+}
+
+function AppShellLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { session, logout } = useAuth();
 
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
+
+  const initials = session
+    ? session.name
+        .split(" ")
+        .map((part) => part[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : "";
+
+  const handleLogout = () => {
+    logout();
+    router.replace(LOGIN_PATH);
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-100 text-slate-950">
@@ -42,6 +70,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               className="h-10 w-full rounded-full border border-slate-200 bg-slate-100/80 pl-10 pr-4 text-sm outline-none transition focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-500/20"
             />
           </form>
+
+          {session && (
+            <div className="ml-auto flex shrink-0 items-center gap-2 md:ml-4">
+              <div
+                className="flex items-center gap-2 rounded-full border border-slate-200 bg-white py-1 pl-1 pr-3 shadow-sm"
+                title={`Signed in as ${session.email} (demo session)`}
+              >
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-linear-to-br from-teal-500 to-teal-800 text-[11px] font-bold text-white">
+                  {initials}
+                </span>
+                <span className="hidden text-sm font-medium text-slate-700 sm:block">
+                  {session.name}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="inline-flex h-9 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-600 shadow-sm transition hover:border-red-200 hover:bg-red-50 hover:text-red-700"
+              >
+                <LogoutIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Log out</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Mobile / tablet nav */}
