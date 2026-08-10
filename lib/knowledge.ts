@@ -1,100 +1,33 @@
-export type EntityKind =
-  "client" | "project" | "person" | "decision" | "topic" | "document" | "message";
+import type {
+  AnswerResult,
+  Client,
+  Decision,
+  Document,
+  EntityKind,
+  KnowledgeCollections,
+  KnowledgeEdge,
+  KnowledgeNode,
+  Person,
+  Project,
+  SlackMessage,
+  Topic,
+} from "./types";
 
-export interface Client {
-  id: string;
-  name: string;
-  industry: string;
-  size: string;
-  primary_contact: string;
-  status: string;
-  notes: string;
-}
-
-export interface Person {
-  id: string;
-  name: string;
-  role: string;
-  email: string;
-  skills: string[];
-}
-
-export interface Project {
-  id: string;
-  name: string;
-  client_id: string | null;
-  status: string;
-  start_date: string;
-  end_date?: string;
-  lead: string;
-  team: string[];
-  description: string;
-  key_topics: string[];
-}
-
-export interface Decision {
-  id: string;
-  title: string;
-  date: string;
-  project_id: string | null;
-  made_by: string;
-  participants: string[];
-  summary: string;
-  related_topics: string[];
-}
-
-export interface Topic {
-  id: string;
-  name: string;
-  description: string;
-}
-
-export interface Document {
-  id: string;
-  label: string;
-  summary: string;
-  topics: string[];
-  projects: string[];
-}
-
-export interface SlackMessage {
-  ts: string;
-  user: string;
-  text: string;
-}
-
-export interface KnowledgeCollections {
-  clients: Client[];
-  people: Person[];
-  projects: Project[];
-  decisions: Decision[];
-  topics: Topic[];
-  documents: Document[];
-  slackMessages: SlackMessage[];
-}
-
-export type KnowledgeNode = {
-  id: string;
-  kind: EntityKind;
-  label: string;
-  summary: string;
-  meta?: string;
-};
-
-export type KnowledgeEdge = {
-  from: string;
-  to: string;
-  label: string;
-};
-
-export type AnswerStep = { title: string; via?: string };
-
-export type AnswerResult = {
-  title: string;
-  answer: string;
-  evidence: string[];
-  path: AnswerStep[];
-};
+export type {
+  AnswerResult,
+  AnswerStep,
+  Client,
+  Decision,
+  Document,
+  EntityKind,
+  KnowledgeCollections,
+  KnowledgeEdge,
+  KnowledgeNode,
+  Person,
+  Project,
+  SlackMessage,
+  Topic,
+} from "./types";
 
 const clients = [
   {
@@ -681,31 +614,6 @@ function emptyAnswer(projects: Project[]): AnswerResult {
     answer: "There is not enough linked knowledge to answer that question yet.",
     evidence: projects.slice(0, 3).map((project) => `${project.name}: ${project.description}`),
     path: [{ title: "Projects" }],
-  };
-}
-
-export function getProjectDetails(
-  projectId: string,
-  collections: KnowledgeCollections = knowledge,
-) {
-  const { projects, clients, decisions, documents, topics, people } = collections;
-  const project = projects.find((item) => item.id === projectId) ?? projects[0];
-  const client = clients.find((item) => item.id === project.client_id);
-  const projectPeople = project.team.map((id) => personById(people, id));
-  const projectDecisions = decisions.filter((decision) => decision.project_id === project.id);
-  const projectDocuments = documents.filter((document) =>
-    document.projects.some((projectRef) => projectRef === project.id),
-  );
-  const projectTopicNames = project.key_topics as readonly string[];
-  const projectTopics = topics.filter((topic) => projectTopicNames.includes(topic.name));
-
-  return {
-    project,
-    client,
-    people: projectPeople,
-    decisions: projectDecisions,
-    documents: projectDocuments,
-    topics: projectTopics,
   };
 }
 

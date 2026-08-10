@@ -1,15 +1,9 @@
 import "server-only";
 import { database } from "@/lib/database";
 import { getDirectRelationships } from "@/lib/relationships";
+import type { AskResult, GraphNode } from "@/lib/types";
 
-export type AskResult = {
-  title: string;
-  answer: string;
-  evidence: Array<{ id: string; kind: string; label: string; excerpt: string }>;
-  path: Array<{ title: string; via?: string }>;
-};
-
-type Node = { id: string; kind: string; label: string; summary: string };
+export type { AskResult } from "@/lib/types";
 
 export async function answerFromKnowledgeGraph(question: string): Promise<AskResult> {
   if (!question.trim()) throw new Error("Question is required");
@@ -98,7 +92,7 @@ export async function answerFromKnowledgeGraph(question: string): Promise<AskRes
   };
 }
 
-async function findEntities(question: string): Promise<Node[]> {
+async function findEntities(question: string): Promise<GraphNode[]> {
   const tokens = [...new Set(question.toLowerCase().match(/[a-z][a-z0-9-]{2,}/g) ?? [])].filter(
     (token) =>
       ![

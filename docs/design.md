@@ -10,6 +10,17 @@ The application is a Next.js App Router application. Interactive views are clien
 
 `lib/knowledge.ts` contains the typed data model, seed data, graph builder, answer logic, and relationship lookup helper. The graph builder creates one node per entity and labeled directed edges such as `works on`, `has decision`, `covers`, and `about`. Views rebuild their graph from the current collection, so a saved decision or document immediately appears in exploration and answer evidence.
 
+## Data flow and intentional dual paths
+
+The client data flow is `UI → hooks/store → API service (lib/api-client.ts) → API routes → server services (lib/entity-api.ts, lib/ask-engine.ts, lib/relationships.ts) → PostgreSQL`. Components never call `fetch` directly: `hooks/useAsk.ts` owns the `/api/ask` request with loading and error state, and `components/knowledge-store.tsx` hydrates collections through `fetchKnowledgeSnapshot()`.
+
+Two deliberate fallbacks keep the demo runnable without any credentials:
+
+- If `/api/knowledge` is unreachable (no `DATABASE_URL`), the store falls back to locally persisted collections (`localStorage`) seeded from the fictional sample data, so CRUD edits still survive reloads.
+- If `/api/ask` is unreachable, the Ask view shows the answer from the deterministic local engine in `lib/knowledge.ts`, which is also the engine exercised by the automated tests. When the database is reachable, the DB-backed answer takes precedence and the UI says so when it is not.
+
+Shared domain types live in `lib/types.ts`, which is client-safe by design (no `server-only` imports); `lib/knowledge.ts` re-exports them for the tests and views.
+
 ## Database decision: PostgreSQL with explicit edge tables
 
 The production persistence design uses PostgreSQL, defined in [`db/schema.sql`](../db/schema.sql). PostgreSQL is the right first choice because Brainbase has a small, well-defined set of entities, needs reliable CRUD, constraints, migrations, and simple operational tooling. It also supports recursive CTEs when multi-hop relationship queries are needed. Neo4j would make sense later if arbitrary deep graph traversal became the dominant workload, but it adds a second data platform without improving the current assignment MVP enough to justify it.

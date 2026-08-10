@@ -12,9 +12,7 @@ export type DemoSession = {
   loggedInAt: string;
 };
 
-export type LoginResult =
-  | { ok: true; session: DemoSession }
-  | { ok: false; error: string };
+export type LoginResult = { ok: true; session: DemoSession } | { ok: false; error: string };
 
 /** Minimal storage surface so the logic can be tested without a browser. */
 export type AuthStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
@@ -67,7 +65,9 @@ function parseSession(raw: string | null): DemoSession | null {
 }
 
 /** Client snapshot for useSyncExternalStore; referentially stable per value. */
-export function getSessionSnapshot(storage: AuthStorage | null = browserStorage()): DemoSession | null {
+export function getSessionSnapshot(
+  storage: AuthStorage | null = browserStorage(),
+): DemoSession | null {
   const raw = storage?.getItem(SESSION_KEY) ?? null;
   if (raw !== cachedRaw) {
     cachedRaw = raw;
@@ -129,10 +129,7 @@ export function logout(storage: AuthStorage | null = browserStorage()): void {
  * Central redirect decision: protected routes send unauthenticated visitors
  * to /login, and authenticated visitors on /login are sent back home.
  */
-export function resolveAuthRedirect(
-  pathname: string,
-  authenticated: boolean,
-): string | null {
+export function resolveAuthRedirect(pathname: string, authenticated: boolean): string | null {
   if (pathname === LOGIN_PATH) {
     return authenticated ? HOME_PATH : null;
   }

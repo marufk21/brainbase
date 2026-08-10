@@ -19,6 +19,7 @@ export async function GET() {
       dt,
       docp,
       doct,
+      mp,
     ] = await Promise.all(
       [
         "clients",
@@ -36,6 +37,7 @@ export async function GET() {
         "decision_topics",
         "document_projects",
         "document_topics",
+        "message_people",
       ].map((t) => db.query(`SELECT * FROM ${t}`)),
     );
     return Response.json({
@@ -55,6 +57,7 @@ export async function GET() {
         dt: dt.rows,
         docp: docp.rows,
         doct: doct.rows,
+        mp: mp.rows,
       },
     });
   } catch (e) {

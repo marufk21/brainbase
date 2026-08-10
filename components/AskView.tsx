@@ -2,34 +2,21 @@
 
 import { useState } from "react";
 import { answerQuestion, sampleQuestions } from "@/lib/knowledge";
+import { useAsk } from "@/hooks/useAsk";
 import { useKnowledge } from "@/components/knowledge-store";
 import { ChatIcon, LinkIcon, SparkleIcon } from "@/components/icons";
 
-type RemoteAnswer = {
-  title: string;
-  answer: string;
-  evidence: { id: string; label: string; excerpt: string }[];
-  path: { title: string; via?: string }[];
-};
-
 export function AskView({ initialQuestion }: { initialQuestion: string }) {
   const { collections } = useKnowledge();
+  const { remote, isLoading, error, ask: askRemote } = useAsk(initialQuestion);
   const [draft, setDraft] = useState(initialQuestion);
   const [question, setQuestion] = useState(initialQuestion);
-  const [remote, setRemote] = useState<RemoteAnswer | null>(null);
   const response = answerQuestion(question, collections);
 
   const ask = (value: string) => {
     setDraft(value);
     setQuestion(value);
-    void fetch("/api/ask", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question: value }),
-    })
-      .then((result) => (result.ok ? result.json() : Promise.reject()))
-      .then((result) => setRemote(result))
-      .catch(() => setRemote(null));
+    askRemote(value);
   };
 
   return (
@@ -99,6 +86,16 @@ export function AskView({ initialQuestion }: { initialQuestion: string }) {
           <p className="mt-3 text-base leading-7 text-slate-700">
             {remote?.answer ?? response.answer}
           </p>
+          {isLoading ? (
+            <p className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-teal-700">
+              Checking the database-backed knowledge graph…
+            </p>
+          ) : null}
+          {error ? (
+            <p className="mt-3 rounded-lg border-l-[3px] border-slate-400 bg-slate-50 px-4 py-2.5 text-sm leading-6 text-slate-600">
+              {error}
+            </p>
+          ) : null}
 
           <div className="mt-6 border-t border-slate-100 pt-5">
             <h3 className="font-semibold">Evidence</h3>
